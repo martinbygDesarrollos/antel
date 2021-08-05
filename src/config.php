@@ -1,6 +1,6 @@
 <?php
 define("DB_HOST", "127.0.0.1");
-define("DB_USR", "admin_antel");
-define("DB_PASS", "55fck63JGWrL1JUu");
-define("DB_DB", "sigecom_antel");
+define("DB_USR", "byguyqrd_admin_antel");
+define("DB_PASS", "bQ_K58JeCT-8");
+define("DB_DB", "byguyqrd_antel");
 ?>

@@ -4,5 +4,5 @@ function validateEmail(email) {
 }
 
 function getSiteURL(){
-	return '/antel/public/';
+	return '/';
 }
