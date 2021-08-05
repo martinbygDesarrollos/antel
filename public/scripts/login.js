@@ -12,3 +12,14 @@ function login(){
 		}else showReplyMessage(1, "Debe ingresar la contraseña para iniciar sesión", "Contraseña campo requerido", null);
 	}else showReplyMessage(1, "Debe ingresar el usuario para iniciar sesión", "Usuario campo requerido", null);
 }
+
+function keyEnterPress(eventEnter){
+	if(eventEnter.keyCode == 13){
+		if(eventEnter.srcElement.id == "inputNickName")
+			$('#inputPassword').focus();
+		else if(eventEnter.srcElement.id == "inputPassword")
+			$('#buttonLogin').focus();
+		else if(eventEnter.srcElement.id == "buttonLogin")
+			$('#buttonLogin').click();
+	}
+}
