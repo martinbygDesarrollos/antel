@@ -115,6 +115,7 @@ class ctr_contracts{
 		$listDir = array_diff(scandir($folderPath . "/movil/"), array('..', '.'));
 		if(sizeof($listDir) > 0){
 			$arrayErrors = array();
+			$arrayContractNotEntered = array();
 			foreach ($listDir as $key => $value) {
 				$arrayName = explode("_", $value);
 				$numberContract = explode("." ,$arrayName[sizeof($arrayName) - 1])[0];
@@ -138,12 +139,16 @@ class ctr_contracts{
 					}
 				}else{
 					contracts::createNewContract(null, null, null, $numberContract, null, null);
+					$arrayContractNotEntered[] = $numberContract;
 				}
 			}
 
 			if(sizeof($arrayErrors) == 0){
 				$response->result = 2;
-				$response->message = "Todos los correos fueron enviados correctamente.";
+				$resultNewContracts = "";
+				if(sizeof($arrayContractNotEntered) != 0)
+					$resultNewContracts = " Se insertaron " . sizeof($arrayContractNotEntered) .  " contratos nuevos en la base de datos.";
+				$response->message = "Todos los contratos contratos con notificaciones activas fueron enviados correctamente." . $resultNewContracts;
 			}else{
 				$response->result = 1;
 				$response->message = "Algunas facturas no fueron enviadas a sus respectivos clientes.";
