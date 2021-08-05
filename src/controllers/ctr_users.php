@@ -4,6 +4,20 @@ require_once '../src/clases/users.php';
 
 class ctr_users{
 
+	public function signOut(){
+		$response = new \stdClass();
+
+		if(session_destroy()){
+			$response->result = 2;
+			$response->message = "Cerró sesión correctamente.";
+		}else{
+			$response->result = 0;
+			$response->message = "Ocurrió un error y no se cerró sesión, intentelo nuevamente.";
+		}
+
+		return $response;
+	}
+
 	public function login($nickName, $password){
 		$response = new \stdClass();
 

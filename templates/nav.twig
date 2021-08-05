@@ -23,7 +23,7 @@
 			<span class="h6 text-white"><em>{{ session.USER }}</em></span>
 		</div>
 		<div class="col">
-			<button class="btn btn-danger"><i class="fas fa-sign-out-alt"></i></button>
+			<a class="btn btn-danger" href="{{ path_for('LogOut') }}"><i class="fas fa-sign-out-alt"></i></a>
 		</div>
 	</div>
 	{% endif %}

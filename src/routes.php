@@ -5,7 +5,7 @@ use Slim\Http\Response;
 
 return function (App $app) {
 
-    $routesU = require_once __DIR__ . "/../src/routes_usuarios.php";
+    $routesU = require_once __DIR__ . "/../src/routes_users.php";
     $routesC = require_once __DIR__ . "/../src/routes_contracts.php";
 
     $container = $app->getContainer();
