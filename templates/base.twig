@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta http-equiv="Expires" content="0">
+	<meta http-equiv="Last-Modified" content="0">
+	<meta http-equiv="Cache-Control" content="no-cache, mustrevalidate">
+	<meta http-equiv="Pragma" content="no-cache">
+
+	<link rel="icon" type="image/png" sizes="32x32" href="{{ path_for('Start') }}img/ico.png">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" integrity="sha512-P5MgMn1jBN01asBgU0z60Qk4QxiXo86+wlFahKrsQf37c9cro517WzVSPPV1tDKzhku2iJ2FVgL67wG03SGnNA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js" integrity="sha512-n/4gHW3atM3QqRcbCn6ewmpxcLAHGaDjpEBu4xZd47N0W2oQ+6q7oc3PXstrJYXcbNU1OHdQ1T7pAP+gi5Yu8g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" integrity="sha512-XKa9Hemdy1Ui3KSGgJdgMyYlUg1gM+QhL6cnlyTe2qzMCYm4nAZ1PsVerQzTTXzonUR+dmswHqgJPuwCq1MaAg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+	<link rel="stylesheet" type="text/css" href="{{ path_for('Start')}}styles/globalStyles.css">
+	<link rel="stylesheet" type="text/css" href="{{ path_for('Start')}}styles/toggle.css">
+	<title>{% block title %}Antel{% endblock %}</title>
+</head>
+<body class="d-flex flex-column" style="background-color: #EEEFF1;">
+	{% include("nav.twig") %}
+	<div id="page-content">
+		<div class="container-fluid">
+			<div class="row justify-content-center">
+				<div class="col p-2">
+					{% block content %}
+
+					{% endblock %}
+				</div>
+			</div>
+		</div>
+	</div>
+	{% include("footer.twig")%}
+	<div id="modalResponse" class="modal" tabindex="-1" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div id="modalColourResponse" class="modal-header">
+					<span id="modalTitleResponse" class="modal-title"></span>
+					<button type="button" class="close" data-dismiss="modal" accesskey="x" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<p id="modalMessageResponse" class="text-center"></p>
+				</div>
+				<div class="modal-footer">
+					<button id="modalButtonResponse" type="button" accesskey="o" class="btn btn-mycolor shadow-sm"><u>O</u>k</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript" src="{{ path_for('Start') }}scripts/showReplyMessage.js"></script>
+	<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils.js"></script>
+	<script type="text/javascript" src="{{ path_for('Start') }}scripts/sendPost.js"></script>
+</body>
+</html>

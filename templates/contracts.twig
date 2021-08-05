@@ -1,0 +1,175 @@
+{% extends "base.twig" %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center">
+	<div class="card border-top-0 rounded-bottom border w-75 shadow">
+		<div class="card-header d-flex justify-content-between bg-primary text-white">
+			<h5>Contratos</h5>
+			<div>
+				<button class="btn btn-primary shadow-sm mr-3" data-toggle="modal" data-target="#modalLoadFile"><i class="fas fa-folder-plus"></i></button>
+				<button class="btn btn-primary shadow-sm" onclick="openModalNewContract()" data-toggle="tooltip" data-placement="right" title="Agregar nuevo contrato">
+					<i class="fas fa-user-plus"></i>
+				</button>
+			</div>
+		</div>
+		<div class="card-body">
+			<div class="d-flex justify-content-between mb-2">
+				<div class="input-group w-25 shadow-sm">
+					<input id="inputToSearch" type="text" class="form-control shadow" onchange="searchUser()" onkeyup="this.onchange()" placeholder="Buscar usuario...">
+				</div>
+			</div>
+			<div id="containerTable">
+				<table class="table">
+					<thead class="bg-primary">
+						<tr>
+							<th class="text-right text-white" scope="col">Contrato</th>
+							<th class="text-right text-white" scope="col">Usuario</th>
+							<th class="text-center text-white" scope="col">Grupo</th>
+							<th class="text-right text-white" scope="col">Celular</th>
+							<th class="text-right text-white" scope="col">Celular envio</th>
+							<th class="text-center text-white" style="width: 6em;" scope="col">Notificar</th>
+							<th class="text-right text-white" scope="col">Correo</th>
+							<th class="text-center text-white" style="width: 6em;" scope="col">Notificar</th>
+							<th class="text-center text-white" style="width: 6em;" scope="col">Acción</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyContracts">
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modalOnLoad" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-body bg-primary">
+				<div class="d-flex justify-content-center">
+					<div class="lds-spinner">
+						<div></div>
+						<div></div>
+						<div></div>
+						<div></div>
+						<div></div>
+						<div></div>
+						<div></div>
+						<div></div>
+						<div></div>
+						<div></div>
+						<div></div>
+						<div></div>
+						<div></div>
+					</div>
+				</div>
+				<div class="d-flex justify-content-center mt-2">
+					<span class="text-center text-white">Se esta descomprimiendo el archivo para enviar las facturas a sus respectivos usuarios.</span>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modalLoadFile" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-primary">
+				<span class="modal-title text-white">Cargar archivo</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="form-group">
+					<label for="exampleFormControlFile1">Seleccione el archivo zip</label>
+					<input type="file"  accept=".zip,.rar,.7zip" class="form-control-file" id="inputFileToLoad">
+				</div>
+			</div>
+			<div class="modal-footer d-flex justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button type="button" class="btn btn-success shadow-sm" onclick="sendFile()">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modalContract" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-primary">
+				<span id="modalTitleContract" class="modal-title text-white">Nuevo contrato</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="row">
+					<div class="col">
+						<div class="form-group">
+							<label class="text-primary" for="inputNameContract">Usuario</label>
+							<input type="text" class="form-control" id="inputNameContract" aria-describedby="emailHelp" placeholder="Ingresar nombre" onKeyPress="return keyEnterPress(event, null, null);">
+						</div>
+					</div>
+					<div class="col">
+						<div class="form-group">
+							<label class="text-primary" for="inputContractContract">Contrato</label>
+							<input type="number" class="form-control" id="inputContractContract" aria-describedby="emailHelp" placeholder="Ingresar n° contrato" onKeyPress="return keyEnterPress(event, null, null);">
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col">
+						<div class="form-group">
+							<label class="text-primary" for="inputMobileContract">Celular</label>
+							<input type="number" maxlength="8" class="form-control" id="inputMobileContract" aria-describedby="emailHelp" placeholder="Ingresar celular" onKeyPress="return keyEnterPress(event, this, 8);">
+						</div>
+					</div>
+					<div class="col">
+						<div class="form-group">
+							<label for="inputGroupContract" class="text-primary">Grupo</label>
+							<div>
+								<input type="text" class="form-control w-25" id="inputGroupContract" onKeyPress="return keyEnterPress(event, this, 1);">
+							</div>
+						</div>
+					</div>
+				</div>
+				<hr>
+				<p class="h6 text-primary mb-3">Notificaciones</p>
+				<div class="row ">
+					<div class="col">
+						<div class="form-group">
+							<label class="text-primary" for="inputEmailContract">Celular</label>
+							<input type="number" class="form-control" id="inputMobileNotificationContract" aria-describedby="emailHelp" placeholder="Ingresar celular" onKeyPress="return keyEnterPress(event, this, 8);">
+						</div>
+					</div>
+					<div class="col">
+						<div class="form-group">
+							<label class="text-primary" for="inputEmailContract">Correo</label>
+							<input type="email" class="form-control" id="inputEmailNotificationContract" aria-describedby="emailHelp" placeholder="Ingresar correo" onKeyPress="return keyEnterPress(event, null, null);">
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer d-flex justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button id="buttonModalContract" type="button" class="btn btn-success shadow-sm" onKeyPress="return keyEnterPress(event, null, null);">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+{%block script%}
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/contracts.js"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils.js"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/sendPost.js"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/showReplyMessage.js"></script>
+<script type="text/javascript">
+	getListContracts();
+	$('#containerTable').on('scroll', function() {
+		if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
+			getListContracts();
+		}
+	});
+</script>
+{% endblock %}
+{% endblock %}
