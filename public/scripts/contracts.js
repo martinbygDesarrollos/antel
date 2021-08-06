@@ -60,7 +60,6 @@ function filterGroup(){
 	if(selectGroup.is(':visible')){
 		groupSelected = selectGroup.val();
 		lastId = 0;
-		textToSearch = null;
 		$('#tbodyContracts').empty();
 		getListContracts();
 	}
@@ -74,8 +73,6 @@ function filterNotificationActive(){
 		checkedActive = 0;
 
 	lastId = 0;
-	textToSearch = null;
-	groupSelected = 0;
 	$('#tbodyContracts').empty();
 	getListContracts();
 }
