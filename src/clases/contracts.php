@@ -4,6 +4,10 @@ require_once '../src/connection/openConnection.php';
 
 class contracts{
 
+	public function setLastNotification($idContract, $dateInt, $nameFile){
+		return DataBase::sendQuery("UPDATE contratos SET fechaNotificacion = ? , ultimoArchivo = ? WHERE id = ?", array('isi', $dateInt, $nameFile, $idContract), "BOOLE");
+	}
+
 	public function getContractToShow($idContract){
 		$responseQuery = DataBase::sendQuery("SELECT * FROM contratos WHERE id = ? ", array('i', $idContract), "OBJECT");
 		if($responseQuery->result == 2){
@@ -106,6 +110,11 @@ class contracts{
 				else
 					$row['celularEnvio'] = contracts::setMobilePhoneFormat($row['celularEnvio']);
 
+				if(is_null($row['fechaNotificacion']))
+					$row['fechaNotificacion'] = "No notificado";
+				else
+					$row['fechaNotificacion'] = handleDateTime::formatDateBarWithMonth($row['fechaNotificacion']);
+
 				$arrayResult[] = $row;
 			}
 			$responseQuery->listResult = $arrayResult;
@@ -117,10 +126,9 @@ class contracts{
 		return $responseQuery;
 	}
 
-	public function sendMail($filePath, $fileName, $contract){
+	public function sendMail($filePath, $fileName, $contract, $mailTo){
 		$file = $filePath . $fileName;
 
-		$mailTo = 'martin@hit.com.uy';
 		$subject = 'Contrato N° ' . $contract;
 		$message = 'Factura por contrato Antel';
 		$content = file_get_contents($file);
@@ -149,9 +157,9 @@ class contracts{
 		$body .= "--" . $separator . "--";
 
 		if(mail($mailTo, $subject, $body, $headers))
-			return true;
+			return TRUE;
 		else
-			return false;
+			return FALSE;
 	}
 
 	public function setMobilePhoneFormat($number){

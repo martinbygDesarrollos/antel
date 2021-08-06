@@ -3,12 +3,17 @@
 {% endblock %}
 {% block content %}
 <div class="d-flex justify-content-center">
-	<div class="card border-top-0 rounded-bottom border w-75 shadow">
+	<div class="card border-top-0 rounded-bottom border shadow">
 		<div class="card-header d-flex justify-content-between bg-primary text-white">
 			<h5>Contratos</h5>
 			<div>
-				<button class="btn btn-primary shadow-sm mr-3" data-toggle="modal" data-target="#modalLoadFile"><i class="fas fa-folder-plus"></i></button>
-				<button class="btn btn-primary shadow-sm" onclick="openModalNewContract()" data-toggle="tooltip" data-placement="right" title="Agregar nuevo contrato">
+				<button class="btn btn-primary shadow-sm mr-3" data-toggle="modal" data-target="#modalSendNotification" data-toggle="tooltip" data-placement="right" title="Enviar todas las facturas">
+					<i class="far fa-paper-plane"></i>
+				</button>
+				<button class="btn btn-primary shadow-sm mr-3" data-toggle="modal" data-target="#modalLoadFile" data-toggle="tooltip" data-placement="right" title="Cargar nuevas facturas">
+					<i class="fas fa-folder-plus"></i>
+				</button>
+				<button class="btn btn-primary shadow-sm" onclick="openModalNewContract()" data-toggle="tooltip" data-placement="right" title="Agregar nuevo contrato" data-toggle="tooltip" data-placement="right" title="Agregar nuevo contrato">
 					<i class="fas fa-user-plus"></i>
 				</button>
 			</div>
@@ -31,12 +36,34 @@
 							<th class="text-center text-white" style="width: 6em;" scope="col">Notificar</th>
 							<th class="text-right text-white" scope="col">Correo</th>
 							<th class="text-center text-white" style="width: 6em;" scope="col">Notificar</th>
-							<th class="text-center text-white" style="width: 6em;" scope="col">Acción</th>
+							<th class="text-right text-white" scope="col">Notificación</th>
+							<th class="text-center text-white" style="width: 8em;" scope="col">Acción</th>
 						</tr>
 					</thead>
 					<tbody id="tbodyContracts">
 					</tbody>
 				</table>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<div class="modal fade" id="modalSendNotification" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-primary">
+				<span class="modal-title text-white">Enviar contratos</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p class="text-center">¿Desea enviar todos los contratos?</p>
+			</div>
+			<div class="modal-footer d-flex justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button type="button" class="btn btn-success shadow-sm" onclick="sendNotificaion()">Confirmar</button>
 			</div>
 		</div>
 	</div>
@@ -64,7 +91,7 @@
 					</div>
 				</div>
 				<div class="d-flex justify-content-center mt-2">
-					<span class="text-center text-white">Se esta descomprimiendo el archivo para enviar las facturas a sus respectivos usuarios.</span>
+					<span id="textModalOnLoad" class="text-center text-white">Se está descomprimiendo el archivo...</span>
 				</div>
 			</div>
 		</div>

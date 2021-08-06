@@ -8,7 +8,7 @@ function getListContracts(){
 			lastId = response.lastId;
 		let list = response.listResult;
 		for(let i = 0; i < list.length; i++){
-			let row = createRow(list[i].id, list[i].grupo, list[i].usuario, list[i].contrato, list[i].celular, list[i].celularEnvio, list[i].enviarCelular, list[i].email, list[i].enviarEmail);
+			let row = createRow(list[i].id, list[i].grupo, list[i].usuario, list[i].contrato, list[i].celular, list[i].celularEnvio, list[i].enviarCelular, list[i].email, list[i].enviarEmail, list[i].fechaNotificacion);
 			$('#tbodyContracts').append(row);
 		}
 	}else if(response.result == 0){
@@ -16,7 +16,7 @@ function getListContracts(){
 	}
 }
 
-function createRow(id, group, user, contract, mobilePhone, mobilePhoneToSend, activeMobile, email, activeEmail){
+function createRow(id, group, user, contract, mobilePhone, mobilePhoneToSend, activeMobile, email, activeEmail, dateNotification){
 	let row = "<tr id='" + id + "' >";
 	row += "<td class='text-right'>" + contract + "</td>";
 	row += "<td class='text-right'>" + user + "</td>";
@@ -35,10 +35,60 @@ function createRow(id, group, user, contract, mobilePhone, mobilePhoneToSend, ac
 		isCheckedE = 'checked';
 
 	row += "<td class='text-center'><label class='switch'><input type='checkbox' id='email" + id + "' onchange='changeNotificationStatusEmail(" + id + ")' " + isCheckedE +"><span class='slider round'></span></label></td>";
-	row += "<td class='text-center text-primary' onclick='showModalUpdateContract(" + id + ")'><i class='fas fa-user-edit'></i></td></tr>";
+	row += "<td class='text-right'>" + dateNotification + "</td>";
+
+	let titleToolTip = "Enviar factura.";
+	if(user != "No especificado.")
+		titleToolTip = "Modificar información de " + user + ".";
+
+	row += "<td class='text-center text-primary'><button class='btn btn-link' onclick='showModalUpdateContract(" + id + ")' data-toggle='tooltip' data-placement='right' title='" + titleToolTip + "'><i class='fas fa-user-edit'></i></button>";
+
+	titleToolTip = "Enviar factura.";
+	if(user != "No especificado.")
+		titleToolTip = "Enviar factura a " + user + ".";
+
+	row += "<button class='btn btn-link' onclick='showModalSendOneNotificacion(" + id + ")' data-toggle='tooltip' data-placement='right' title='" + titleToolTip + "'><i class='fas fa-paper-plane'></i></button></td></tr>";
+
 	return row;
 }
 
+function showModalSendOneNotificacion(idContract){
+	let response = sendPost('getContractWithID', {idContract: idContract});
+	if(response.result == 2){
+		if(response.contract.enviarEmail == 1 || response.contract.enviarCelular == 1){
+			$('#modalSendNotification').modal('hide');
+			$('#modalOnLoad').modal({backdrop: 'static', keyboard: false})
+			$('#modalOnLoad').modal();
+			$('#textModalOnLoad').html("Se esta enviando el contrato al cliente " + response.contract.usuario + "...");
+
+			sendAsyncPost('notifyOneContract', {idContract: idContract})
+			.then(function(response){
+				$('#modalOnLoad').modal('hide');
+				showReplyMessage(response.result, response.message, "Enviar notificación", null);
+			})
+			.catch(function(response){
+				$('#modalOnLoad').modal('hide');
+				showReplyMessage(response.result, response.message, "Enviar notificación", null);
+			})
+		}else showReplyMessage(1, "El usuario seleccionado no tiene un medio de notificación activo.", "Notificaciones desactivadas", null);
+	}else showReplyMessage(response.result, response.message, "Contrato no encontrado", null);
+}
+
+function sendNotificaion(){
+	$('#modalSendNotification').modal('hide');
+	$('#modalOnLoad').modal({backdrop: 'static', keyboard: false})
+	$('#modalOnLoad').modal();
+	$('#textModalOnLoad').html("Se están enviando los contratos...");
+	sendAsyncPost("notifyAllContract", null)
+	.then(function(response){
+		$('#modalOnLoad').modal('hide');
+		showReplyMessage(response.result, response.message, "Enviar notificación", null);
+	})
+	.catch(function(response){
+		$('#modalOnLoad').modal('hide');
+		showReplyMessage(response.result, response.message, "Enviar notificación", null);
+	})
+}
 
 function sendFile(){
 	let file = $('#inputFileToLoad').prop('files');
@@ -50,7 +100,7 @@ function sendFile(){
 		$('#modalLoadFile').modal('hide');
 		$('#modalOnLoad').modal({backdrop: 'static', keyboard: false})
 		$('#modalOnLoad').modal();
-
+		$('#textModalOnLoad').html("Se está descomprimiendo el archivo...");
 		getBase64(file[0]).then(function(value){
 			let data = {
 				nameFile: nameFile,
@@ -60,7 +110,6 @@ function sendFile(){
 			sendAsyncPost("loadFileToSend", data)
 			.then(function(response){
 				$('#modalOnLoad').modal('hide');
-				sendPost('clearFolderPDFs', null);
 				showReplyMessage(response.result, response.message, "Enviar facturas", null);
 			})
 			.catch(function(){

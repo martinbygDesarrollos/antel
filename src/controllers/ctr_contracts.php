@@ -1,6 +1,7 @@
 <?php
 
 require_once '../src/clases/contracts.php';
+require_once '../src/utils/handle_date_time.php';
 
 class ctr_contracts{
 
@@ -33,9 +34,9 @@ class ctr_contracts{
 				}
 			}else if(strcmp($typeNotification, "MOBILE") == 0){
 				if($responseGetContract->objectResult->enviarCelular == 0){
-					if(is_null($responseGetContract->objectResult->celularEnvio)){
+					if(is_null($responseGetContract->objectResult->celularEnvio) && is_null($responseGetContract->objectResult->celular)){
 						$response->result = 0;
-						$response->message = "Debe ingresar un celular de envio para activar las notificaciones por WhatsApp.";
+						$response->message = "Debe contar con el número de celular o celular de envio para activar las notificaciones por WhatsApp.";
 						return $response;
 					}
 					$newStatus = 1;
@@ -44,9 +45,9 @@ class ctr_contracts{
 
 			$responseUpdateStatus = null;
 			if(strcmp($typeNotification, "EMAIL") == 0)
-				$responseUpdateStatus = contracts::changeNotificationStatusEmail($idContract, $newStatus, $email);
+				$responseUpdateStatus = contracts::changeNotificationStatusEmail($idContract, $newStatus);
 			else if(strcmp($typeNotification, "MOBILE") == 0)
-				$responseUpdateStatus = contracts::changeNotificationStatusMobile($idContract, $newStatus, $mobile);
+				$responseUpdateStatus = contracts::changeNotificationStatusMobile($idContract, $newStatus);
 
 			if(!is_null($responseUpdateStatus)){
 				if($responseUpdateStatus->result == 2){
@@ -114,48 +115,194 @@ class ctr_contracts{
 
 		$listDir = array_diff(scandir($folderPath . "/movil/"), array('..', '.'));
 		if(sizeof($listDir) > 0){
-			$arrayErrors = array();
+			$countNew = 0;
 			$arrayContractNotEntered = array();
 			foreach ($listDir as $key => $value) {
 				$arrayName = explode("_", $value);
 				$numberContract = explode("." ,$arrayName[sizeof($arrayName) - 1])[0];
 				$responseGetContract = contracts::getContractWithNumber($numberContract);
-				if($responseGetContract->result == 2){
-					$currentFolder = $folderPath . "/movil/";
-					if($responseGetContract->objectResult->enviarEmail == 1){
-						if(!is_null($responseGetContract->objectResult->email)){
-							$resultSendEmail = contracts::sendMail($currentFolder, $value, $numberContract);
-							if(!$resultSendEmail)
-								$arrayErrors[] = $responseGetContract->objectResult->usuario;
-						}
-					}
-
-					if($responseGetContract->objectResult->enviarCelular == 1){
-						if(!is_null($responseGetContract->objectResult->celularEnvio)){
-							$responseSent = json_decode(ctr_contracts::sendWhatsApp(base64_encode(file_get_contents($currentFolder . $value)), $value, $responseGetContract->objectResult->celularEnvio));
-							if($responseSent->sent == FALSE)
-								$arrayErrors[] = $responseGetContract->objectResult->usuario;
-						}
-					}
-				}else{
-					contracts::createNewContract(null, null, null, $numberContract, null, null);
-					$arrayContractNotEntered[] = $numberContract;
+				if($responseGetContract->result == 1){
+					$responseInsert = contracts::createNewContract(null, null, null, $numberContract, null, null);
+					if($responseInsert->result == 2)
+						$countNew++;
 				}
 			}
 
-			if(sizeof($arrayErrors) == 0){
-				$response->result = 2;
-				$resultNewContracts = "";
-				if(sizeof($arrayContractNotEntered) != 0)
-					$resultNewContracts = " Se insertaron " . sizeof($arrayContractNotEntered) .  " contratos nuevos en la base de datos.";
-				$response->message = "Todos los contratos contratos con notificaciones activas fueron enviados correctamente." . $resultNewContracts;
-			}else{
-				$response->result = 1;
-				$response->message = "Algunas facturas no fueron enviadas a sus respectivos clientes.";
-			}
+			$response->result = 2;
+			if($countNew > 0)
+				$response->message = "Se descomprimió el archivo y se encontraron " . $countNew . " contratos nuevos";
+			else
+				$response->message = "Se descomprimió el archivo y los contratos estan preparados para ser enviados.";
 		}else{
 			$response->result = 0;
 			$response->message = "Ocurrió un error y los archivos no se pueden leer.";
+		}
+
+		return $response;
+	}
+
+	public function notifyOneContract($idContract){
+		$response = new \stdClass();
+
+		$folderPath = dirname(dirname(__DIR__)) . "/public/pdfs/movil/";
+		if(file_exists($folderPath)){
+			$listDir = array_diff(scandir($folderPath), array('..', '.'));
+			if(sizeof($listDir) > 0){
+
+				$lastNotification = handleDateTime::getDateLastNotification();
+				$responseGetContract = contracts::getContractWithID($idContract);
+				if($responseGetContract->result == 2){
+					foreach($listDir as $key => $value){
+						$arrayName = explode("_", $value);
+						$numberContract = explode("." ,$arrayName[sizeof($arrayName) - 1])[0];
+						$responseEmail = null;
+						$responseMovil = null;
+
+						if(strcmp($responseGetContract->objectResult->contrato, $numberContract) == 0){
+							if($responseGetContract->objectResult->enviarCelular == 1){
+								$tempMobileNumber = null;
+								if(!is_null($responseGetContract->objectResult->celularEnvio))
+									$tempMobileNumber = $responseGetContract->objectResult->celularEnvio;
+								else if(!is_null($responseGetContract->objectResult->celular))
+									$tempMobileNumber = $responseGetContract->objectResult->celular;
+
+								if(!is_null($tempMobileNumber)){
+									$responseMovil = json_decode(ctr_contracts::sendWhatsApp(base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber));
+									if($responseMovil->sent == TRUE){
+										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
+									}else{
+										$response->result = 0;
+										$response->message = "Ocurrió un error y pudo notificar al usuario a traves de WhatsApp.";
+										return $response;
+									}
+								}
+							}
+
+							if($responseGetContract->objectResult->enviarEmail == 1){
+								if(!is_null($responseGetContract->objectResult->email)){
+									$responseEmail = contracts::sendMail($folderPath, $value, $numberContract, $responseGetContract->objectResult->email);
+									if($responseEmail){
+										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
+									}else{
+										$response->result = 0;
+										$response->message = "Ocurrió un error y pudo notificar al usuario a traves del correo.";
+										return $response;
+									}
+								}
+							}
+
+							if($responseGetContract->objectResult->enviarEmail == 1 && $responseGetContract->objectResult->enviarCelular == 1){
+								if($responseEmail == TRUE && $responseMovil->sent == TRUE){
+									$response->result = 2;
+									$response->message = "La factura fue enviado correctamente a través de WhatsApp y correo.";
+								}else if($responseEmail == FALSE && $responseMovil->sent == FALSE){
+									$response->result = 0;
+									$response->message = "Ocurrió un error y el usuario no fue notificado a través de WhatsApp o correo.";
+								}else{
+									$response->result = 1;
+									if($responseEmail == FALSE)
+										$response->message = "La factura fue enviada a través de WhatsApp, el envio por correo falló.";
+									else
+										$response->message = "La factura fue enviada a través del correo, el envio por WhatsApp falló.";
+								}
+							}else if($responseGetContract->objectResult->enviarEmail == 1){
+								if($responseEmail == TRUE){
+									$response->result = 2;
+									$response->message = "La factura fue enviada correctamente por correo.";
+								}else{
+									$response->result = 0;
+									$response->message = "Ocurrió un error y la factura no fue enviada a través del correo.";
+								}
+							}else if($responseGetContract->objectResult->enviarCelular == 1){
+								if($responseMovil->sent == TRUE){
+									$response->result = 2;
+									$response->message = "La factura fue enviada correctamente por WhatsApp.";
+								}else{
+									$response->result = 0;
+									$response->message = "Ocurrió un error y la factura no fue enviada a través de WhatsApp.";
+								}
+							}
+
+							return $response;
+						}
+					}
+					$response->result = 0;
+					$response->message = "El contrato correspondiente a " . $responseGetContract->objectResult->usuario . " no se encuentra dentro de los archivos cargados.";
+				}else return $responseGetContract;
+			}else{
+				$response->result = 0;
+				$response->message = "No se encontraron los archivos del zip cargado.";
+			}
+		}else{
+			$response->result = 0;
+			$response->message = "Debe cargar nuevos contratos para enviar.";
+		}
+
+		return $response;
+	}
+
+	public function notifyAllContract(){
+		$response = new \stdClass();
+
+		$folderPath = dirname(dirname(__DIR__)) . "/public/pdfs/movil";
+		if(file_exists($folderPath)){
+
+			$listDir = array_diff(scandir($folderPath), array('..', '.'));
+			if(sizeof($listDir) > 0){
+				$lastNotification = handleDateTime::getDateLastNotification();
+				$arrayErrors = array();
+				foreach ($listDir as $key => $value) {
+
+					$arrayName = explode("_", $value);
+					$numberContract = explode("." ,$arrayName[sizeof($arrayName) - 1])[0];
+					$responseGetContract = contracts::getContractWithNumber($numberContract);
+					if($responseGetContract->result == 2){
+
+						$folderPath .= '/';
+						if(is_null($responseGetContract->objectResult->ultimoArchivo) || strcmp($responseGetContract->objectResult->ultimoArchivo, $value) != 0){
+							if($responseGetContract->objectResult->enviarEmail == 1){
+								if(!is_null($responseGetContract->objectResult->email)){
+									$resultSendEmail = contracts::sendMail($folderPath, $value, $numberContract, $responseGetContract->objectResult->email);
+									if($resultSendEmail){
+										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
+										sleep(4);
+									}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
+								}
+							}
+
+							if($responseGetContract->objectResult->enviarCelular == 1){
+								$tempMobileNumber = null;
+								if(!is_null($responseGetContract->objectResult->celularEnvio))
+									$tempMobileNumber = $responseGetContract->objectResult->celularEnvio;
+								else if(!is_null($responseGetContract->objectResult->celular))
+									$tempMobileNumber = $responseGetContract->objectResult->celular;
+
+								if(!is_null($tempMobileNumber)){
+									$responseSent = json_decode(ctr_contracts::sendWhatsApp(base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber));
+									if($responseSent->sent == TRUE){
+										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
+										sleep(12);
+									}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
+								}
+							}
+						}
+					}
+				}
+
+				if(sizeof($arrayErrors) == 0){
+					$response->result = 2;
+					$response->message = "Todos los contratos contratos con notificaciones activas fueron enviados correctamente.";
+				}else{
+					$response->result = 1;
+					$response->message = "Algunas facturas no fueron enviadas a sus respectivos clientes.";
+				}
+			}else{
+				$response->result = 0;
+				$response->message = "Ocurrió un error y los archivos no se pueden leer.";
+			}
+		}else{
+			$response->result = 0;
+			$response->message = "Debe cargar nuevos contratos para enviar.";
 		}
 
 		return $response;

@@ -106,6 +106,24 @@ return function (App $app){
 		return json_encode($responseFunction);
 	});
 
+	$app->post('/notifyAllContract', function(Request $request, Response $response){
+		$responseFunction = ctr_users::validateCurrentSession();
+		if($responseFunction->result == 2){
+			$responseFunction = ctr_contracts::notifyAllContract();
+		}
+		return json_encode($responseFunction);
+	});
+
+	$app->post('/notifyOneContract', function(Request $request, Response $response){
+		$responseFunction = ctr_users::validateCurrentSession();
+		if($responseFunction->result == 2){
+			$data = $request->getParams();
+			$idContract = $data['idContract'];
+			$responseFunction = ctr_contracts::notifyOneContract($idContract);
+		}
+		return json_encode($responseFunction);
+	});
+
 	$app->post('/changeNotificationStatus', function(Request $request, Response $response){
 		$responseFunction = ctr_users::validateCurrentSession();
 		if($responseFunction->result == 2){
