@@ -5,6 +5,17 @@ require_once '../src/utils/handle_date_time.php';
 
 class ctr_contracts{
 
+	public function getGroupsContract(){
+		$response = new \stdClass();
+
+		$responseGetGroups = contracts::getGroupsContract();
+		if($responseGetGroups->result == 2){
+			$response->result = 2;
+			$response->listGroups = $responseGetGroups->listResult;
+		}else return $responseGetGroups;
+		return $response;
+	}
+
 	public function getContractToShow($idContract){
 		$response = new \stdClass();
 
@@ -451,10 +462,16 @@ class ctr_contracts{
 		return $response;
 	}
 
-	public function getListContracts($lastId, $textToSearch){
+	public function getListContracts($lastId, $textToSearch, $group, $checkedActive){
 		$response = new \stdClass();
 
-		$responseGetContracts = contracts::getListContracts($lastId, $textToSearch);
+		if($group == 0)
+			$group = null;
+
+		if($checkedActive == 0)
+			$checkedActive = null;
+
+		$responseGetContracts = contracts::getListContracts($lastId, $textToSearch, $group, $checkedActive);
 		if($responseGetContracts->result == 2){
 			$response->result = 2;
 			$response->listResult = $responseGetContracts->listResult;

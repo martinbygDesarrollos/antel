@@ -1,8 +1,10 @@
 let lastId = 0;
 let textToSearch = null;
+let groupSelected = 0;
+let checkedActive = 0;
 
 function getListContracts(){
-	let response = sendPost("getListContracts", {lastId: lastId, textToSearch: textToSearch});
+	let response = sendPost("getListContracts", {lastId: lastId, textToSearch: textToSearch, group: groupSelected, checkedActive: checkedActive});
 	if(response.result == 2){
 		if(lastId != response.lastId)
 			lastId = response.lastId;
@@ -50,6 +52,32 @@ function createRow(id, group, user, contract, mobilePhone, mobilePhoneToSend, ac
 	row += "<button class='btn btn-link' onclick='showModalSendOneNotificacion(" + id + ")' data-toggle='tooltip' data-placement='right' title='" + titleToolTip + "'><i class='fas fa-paper-plane'></i></button></td></tr>";
 
 	return row;
+}
+
+function filterGroup(){
+	let selectGroup = $('#selectGroup');
+
+	if(selectGroup.is(':visible')){
+		groupSelected = selectGroup.val();
+		lastId = 0;
+		textToSearch = null;
+		$('#tbodyContracts').empty();
+		getListContracts();
+	}
+}
+
+function filterNotificationActive(){
+	let check = $('#inputCheckActive').is(':checked');
+	if(check)
+		checkedActive = 1;
+	else
+		checkedActive = 0;
+
+	lastId = 0;
+	textToSearch = null;
+	groupSelected = 0;
+	$('#tbodyContracts').empty();
+	getListContracts();
 }
 
 function showModalSendOneNotificacion(idContract){

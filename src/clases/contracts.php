@@ -4,6 +4,14 @@ require_once '../src/connection/openConnection.php';
 
 class contracts{
 
+	public function getGroupsContract(){
+		$responseQuery = DataBase::sendQuery("SELECT DISTINCT grupo FROM contratos WHERE grupo IS NOT NULL", null, "LIST");
+		if($responseQuery->result == 1)
+			$responseQuery->message = "No se encontraron registros en la base de datos para obtener sus grupos.";
+
+		return $responseQuery;
+	}
+
 	public function setLastNotification($idContract, $dateInt, $nameFile){
 		return DataBase::sendQuery("UPDATE contratos SET fechaNotificacion = ? , ultimoArchivo = ? WHERE id = ?", array('isi', $dateInt, $nameFile, $idContract), "BOOLE");
 	}
@@ -72,18 +80,30 @@ class contracts{
 		if($responseQuery->result == 2) return $responseQuery->objectResult->lastID + 1;
 	}
 
-	public function getListContracts($lastId, $textToSearch){
+	public function getListContracts($lastId, $textToSearch, $group, $checkedActive){
 		if($lastId == 0) $lastId = contracts::getMaxID();
 
 		$sqlToSearch = "";
 		if(strlen($textToSearch) > 0){
-			if(ctype_digit($textToSearch))
-				$sqlToSearch = " AND contrato LIKE '" . $textToSearch . "%'";
-			else
-				$sqlToSearch = " AND usuario LIKE '" . $textToSearch . "%'";
+			if(ctype_digit($textToSearch)){
+				$textMobileNumber = "";
+				if(strcmp(substr($textToSearch, 0,1), 0) == 0)
+					$textMobileNumber = substr($textToSearch, 1, strlen($textToSearch) - 1);
+				else
+					$textMobileNumber = $textToSearch;
+				$sqlToSearch = " AND (contrato LIKE '" . $textToSearch . "%' OR celular LIKE '" . $textMobileNumber . "%')" ;
+			}else $sqlToSearch = " AND usuario LIKE '" . $textToSearch . "%'";
 		}
 
-		$responseQuery = DataBase::sendQuery("SELECT * FROM contratos WHERE id < ? " . $sqlToSearch . " ORDER BY id DESC LIMIT 14", array('i', $lastId), "LIST");
+		$sqlNotification = "";
+		if(!is_null($checkedActive))
+			$sqlNotification = " AND (enviarCelular = 1 OR enviarEmail = 1)";
+
+		$sqlGroup = "";
+		if(!is_null($group))
+			$sqlGroup = " AND grupo = " . $group;
+
+		$responseQuery = DataBase::sendQuery("SELECT * FROM contratos WHERE id < ? " . $sqlToSearch . $sqlNotification . $sqlGroup . " ORDER BY id DESC LIMIT 14", array('i', $lastId), "LIST");
 		if($responseQuery->result == 2){
 			$newLastId = $lastId;
 			$arrayResult = array();

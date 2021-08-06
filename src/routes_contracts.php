@@ -15,6 +15,7 @@ return function (App $app){
 		$responseFunction = ctr_users::validateCurrentSession();
 		if($responseFunction->result == 2){
 			$args['session'] = $_SESSION['ADMIN'];
+			$args['responseGroups'] = ctr_contracts::getGroupsContract();
 			return $this->view->render($response, "contracts.twig", $args);
 		}
 		return $response->withRedirect('iniciar-sesion');
@@ -26,7 +27,9 @@ return function (App $app){
 			$data = $request->getParams();
 			$lastId = $data['lastId'];
 			$textToSearch = $data['textToSearch'];
-			$responseFunction = ctr_contracts::getListContracts($lastId, $textToSearch);
+			$group = $data['group'];
+			$checkedActive = $data['checkedActive'];
+			$responseFunction = ctr_contracts::getListContracts($lastId, $textToSearch, $group, $checkedActive);
 		}
 		return json_encode($responseFunction);
 	});
