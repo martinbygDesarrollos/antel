@@ -101,7 +101,7 @@ class contracts{
 
 		$sqlGroup = "";
 		if(!is_null($group))
-			$sqlGroup = " AND grupo = " . $group;
+			$sqlGroup = " AND grupo LIKE '" . $group ."' ";
 
 		$responseQuery = DataBase::sendQuery("SELECT * FROM contratos WHERE id < ? " . $sqlToSearch . $sqlNotification . $sqlGroup . " ORDER BY id DESC LIMIT 14", array('i', $lastId), "LIST");
 		if($responseQuery->result == 2){

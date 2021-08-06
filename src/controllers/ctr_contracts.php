@@ -465,7 +465,7 @@ class ctr_contracts{
 	public function getListContracts($lastId, $textToSearch, $group, $checkedActive){
 		$response = new \stdClass();
 
-		if($group == 0)
+		if(strcmp($group,"0") == 0)
 			$group = null;
 
 		if($checkedActive == 0)
