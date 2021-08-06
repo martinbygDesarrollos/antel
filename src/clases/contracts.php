@@ -97,7 +97,7 @@ class contracts{
 
 		$sqlNotification = "";
 		if(!is_null($checkedActive))
-			$sqlNotification = " AND (enviarCelular = 1 OR enviarEmail = 1)";
+			$sqlNotification = " AND (enviarCelular = 0 OR enviarEmail = 0)";
 
 		$sqlGroup = "";
 		if(!is_null($group))
