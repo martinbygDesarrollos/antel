@@ -2,5 +2,31 @@
 {% block head %}
 {% endblock %}
 {% block content %}
-
+{% if session %}
+{% if groupsInfo.result == 2 %}
+<div class="d-flex flex-row-reverse">
+	<div class="card shadow">
+		<div class="card-body bg-primary">
+			<h6 class="card-title text-center text-white">Grupos</h6>
+			<table class="table table-bordered table-sm text-white">
+				<thead>
+					<tr>
+						<th class="text-center">Grupo</th>
+						<th class="text-center">Cantidad</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for group in groupsInfo.list %}
+					<tr>
+						<th class="text-center">{{ group.grupo }}</th>
+						<th class="text-center">{{ group.cantGrupo }}</th>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+{% endif %}
+{% endif %}
 {% endblock %}

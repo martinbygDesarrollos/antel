@@ -4,6 +4,14 @@ require_once '../src/connection/openConnection.php';
 
 class contracts{
 
+	public function getGroupsInformation(){
+		$responseQuery = DataBase::sendQuery("SELECT DISTINCT grupo, COUNT(grupo) as cantGrupo FROM contratos WHERE grupo IS NOT NULL GROUP BY grupo", null, "LIST");
+		if($responseQuery->result == 1)
+			$responseQuery->message = "No se obtuvieron registrso por contratos de la base de datos.";
+
+		return $responseQuery;
+	}
+
 	public function getGroupsContract(){
 		$responseQuery = DataBase::sendQuery("SELECT DISTINCT grupo FROM contratos WHERE grupo IS NOT NULL", null, "LIST");
 		if($responseQuery->result == 1)

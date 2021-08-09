@@ -5,6 +5,18 @@ require_once '../src/utils/handle_date_time.php';
 
 class ctr_contracts{
 
+	public function getGroupsInformation(){
+		$response = new \stdClass();
+
+		$responseGetInfo = contracts::getGroupsInformation();
+		if($responseGetInfo->result == 2){
+			$response->result = 2;
+			$response->list =  $responseGetInfo->listResult;
+		}else return $responseGetInfo;
+
+		return $response;
+	}
+
 	public function getGroupsContract(){
 		$response = new \stdClass();
 
