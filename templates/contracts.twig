@@ -5,7 +5,7 @@
 <div class="d-flex justify-content-center">
 	<div class="card border-top-0 rounded-bottom border shadow">
 		<div class="card-header d-flex justify-content-between bg-primary text-white">
-			<h5>Contratos</h5>
+			<h5>{{ responseGroups.totContracts }}&nbsp;Contratos</h5>
 			<div>
 				<button class="btn btn-primary shadow-sm mr-3" data-toggle="modal" data-target="#modalSendNotification" data-toggle="tooltip" data-placement="right" title="Enviar todas las facturas">
 					<i class="far fa-paper-plane"></i>
@@ -33,7 +33,7 @@
 					{% if responseGroups.result == 2 %}
 					<select id="selectGroup" class="form-select mr-3 bg-primary text-white" onchange="filterGroup()">
 						<option value="0" selected>Grupos</option>
-						{% for group in responseGroups.listGroups %}
+						{% for group in responseGroups.listResult %}
 						<option value="{{ group.grupo }}">{{ group.grupo }}</option>
 						{% endfor %}
 					</select>
@@ -45,6 +45,7 @@
 					<thead class="bg-primary">
 						<tr>
 							<th class="text-right text-white" scope="col">Contrato</th>
+							<th class="text-right text-white" scope="col">Importe</th>
 							<th class="text-right text-white" scope="col">Usuario</th>
 							<th class="text-center text-white" scope="col">Grupo</th>
 							<th class="text-right text-white" scope="col">Celular</th>
@@ -53,7 +54,7 @@
 							<th class="text-right text-white" scope="col">Correo</th>
 							<th class="text-center text-white" style="width: 6em;" scope="col">Notificar</th>
 							<th class="text-right text-white" scope="col">Notificación</th>
-							<th class="text-center text-white" style="width: 8em;" scope="col">Acción</th>
+							<th class="text-center text-white" style="width: 10em;" scope="col">Acción</th>
 						</tr>
 					</thead>
 					<tbody id="tbodyContracts">
@@ -64,6 +65,25 @@
 	</div>
 </div>
 
+<div class="modal fade" id="modalDeleteContract" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-primary">
+				<span class="modal-title text-white">Borrar contrato</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p class="text-center">¿Desea borrar el contrato seleccionado?</p>
+			</div>
+			<div class="modal-footer d-flex justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button id="buttonConfirmDelete" type="button" class="btn btn-success shadow-sm">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
 
 <div class="modal fade" id="modalSendNotification" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered" role="document">
@@ -126,7 +146,7 @@
 			<div class="modal-body">
 				<div class="form-group">
 					<label for="exampleFormControlFile1">Seleccione el archivo zip</label>
-					<input type="file"  accept=".zip,.rar,.7zip" class="form-control-file" id="inputFileToLoad">
+					<input type="file"  accept=".zip,.xml" class="form-control-file" id="inputFileToLoad">
 				</div>
 			</div>
 			<div class="modal-footer d-flex justify-content-between">

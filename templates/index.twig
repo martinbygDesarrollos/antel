@@ -16,12 +16,16 @@
 					</tr>
 				</thead>
 				<tbody>
-					{% for group in groupsInfo.list %}
+					{% for group in groupsInfo.listResult %}
 					<tr>
 						<th class="text-center">{{ group.grupo }}</th>
 						<th class="text-center">{{ group.cantGrupo }}</th>
 					</tr>
 					{% endfor %}
+					<tr>
+						<th class="text-center">Total</th>
+						<th class="text-center">{{ groupsInfo.totContracts }}</th>
+					</tr>
 				</tbody>
 			</table>
 		</div>

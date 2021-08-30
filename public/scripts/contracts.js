@@ -10,7 +10,7 @@ function getListContracts(){
 			lastId = response.lastId;
 		let list = response.listResult;
 		for(let i = 0; i < list.length; i++){
-			let row = createRow(list[i].id, list[i].grupo, list[i].usuario, list[i].contrato, list[i].celular, list[i].celularEnvio, list[i].enviarCelular, list[i].email, list[i].enviarEmail, list[i].fechaNotificacion);
+			let row = createRow(list[i].id, list[i].grupo, list[i].usuario, list[i].contrato, list[i].importe, list[i].celular, list[i].celularEnvio, list[i].enviarCelular, list[i].email, list[i].enviarEmail, list[i].fechaNotificacion);
 			$('#tbodyContracts').append(row);
 		}
 	}else if(response.result == 0){
@@ -18,9 +18,10 @@ function getListContracts(){
 	}
 }
 
-function createRow(id, group, user, contract, mobilePhone, mobilePhoneToSend, activeMobile, email, activeEmail, dateNotification){
+function createRow(id, group, user, contract, importe, mobilePhone, mobilePhoneToSend, activeMobile, email, activeEmail, dateNotification){
 	let row = "<tr id='" + id + "' >";
 	row += "<td class='text-right'>" + contract + "</td>";
+	row += "<td class='text-right'>" + importe + "</td>";
 	row += "<td class='text-right'>" + user + "</td>";
 	row += "<td class='text-center'>" + group + "</td>";
 	row += "<td class='text-right'>" + mobilePhone + "</td>";
@@ -49,9 +50,27 @@ function createRow(id, group, user, contract, mobilePhone, mobilePhoneToSend, ac
 	if(user != "No especificado.")
 		titleToolTip = "Enviar factura a " + user + ".";
 
-	row += "<button class='btn btn-link' onclick='showModalSendOneNotificacion(" + id + ")' data-toggle='tooltip' data-placement='right' title='" + titleToolTip + "'><i class='fas fa-paper-plane'></i></button></td></tr>";
+	row += "<button class='btn btn-link' onclick='showModalSendOneNotificacion(" + id + ")' data-toggle='tooltip' data-placement='right' title='" + titleToolTip + "'><i class='fas fa-paper-plane'></i></button>";
+	row += "<button class='btn btn-link' onclick='showModalDeleteContract(" + id + ")' data-toggle='tooltip' data-placement='right' title='Borrar contrato'><i class='fas fa-trash-alt'></i></button>";
+
+	row += "</td></tr>";
 
 	return row;
+}
+
+function showModalDeleteContract(idContract){
+	$('#modalDeleteContract').modal();
+	$('#buttonConfirmDelete').off('click');
+	$('#buttonConfirmDelete').click(function(){
+		deleteContractSelected(idContract);
+	});
+}
+
+function deleteContractSelected(idContract){
+	let response = sendPost('deleteContractSelected', {idContract: idContract});
+	showReplyMessage(response.result, response.message, "Borrar contrato", "modalDeleteContract");
+	if(response.result == 2)
+		$('#' + idContract).remove();
 }
 
 function filterGroup(){
@@ -136,6 +155,12 @@ function sendFile(){
 			.then(function(response){
 				$('#modalOnLoad').modal('hide');
 				showReplyMessage(response.result, response.message, "Enviar facturas", null);
+				if(response.result != 0){
+					lastId = 0;
+					$('#tbodyContracts').empty();
+					getListContracts();
+				}
+
 			})
 			.catch(function(){
 				$('#modalOnLoad').modal('hide');
@@ -230,7 +255,7 @@ function updateContract(idContract){
 			showReplyMessage(responseUpdate.result, responseUpdate.message, "Modificar contrato", "modalContract");
 			if(responseUpdate.result == 2){
 				let updated = responseUpdate.contract;
-				let row = createRow(updated.id, updated.grupo, updated.usuario, updated.contrato, updated.celular, updated.celularEnvio, updated.enviarCelular, updated.email, updated.enviarEmail);
+				let row = createRow(updated.id, updated.grupo, updated.usuario, updated.contrato, updated.importe, updated.celular, updated.celularEnvio, updated.enviarCelular, updated.email, updated.enviarEmail, updated.fechaNotificacion);
 				$('#' + idContract).replaceWith(row);
 			}
 		}else showReplyMessage(responseDontRepeatContract.result, responseDontRepeatContract.message, "Modificar contrato", "modalContract");
@@ -278,7 +303,7 @@ function createNewContract(){
 			showReplyMessage(responseCreateContract.result, responseCreateContract.message, "Crear contrato", "modalContract");
 			if(responseCreateContract.result == 2){
 				let created = responseCreateContract.contract;
-				let row = createRow(created.id, created.grupo, created.usuario, created.contrato, created.celular, created.celularEnvio, created.enviarCelular, created.email, created.enviarEmail);
+				let row = createRow(created.id, created.grupo, created.usuario, created.contrato, created.importe, created.celular, created.celularEnvio, created.enviarCelular, created.email, created.enviarEmail, created.fechaNotificacion);
 				$('#tbodyContracts').prepend(row);
 				cleanUpContract();
 			}

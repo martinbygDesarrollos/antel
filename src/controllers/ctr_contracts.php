@@ -6,26 +6,7 @@ require_once '../src/utils/handle_date_time.php';
 class ctr_contracts{
 
 	public function getGroupsInformation(){
-		$response = new \stdClass();
-
-		$responseGetInfo = contracts::getGroupsInformation();
-		if($responseGetInfo->result == 2){
-			$response->result = 2;
-			$response->list =  $responseGetInfo->listResult;
-		}else return $responseGetInfo;
-
-		return $response;
-	}
-
-	public function getGroupsContract(){
-		$response = new \stdClass();
-
-		$responseGetGroups = contracts::getGroupsContract();
-		if($responseGetGroups->result == 2){
-			$response->result = 2;
-			$response->listGroups = $responseGetGroups->listResult;
-		}else return $responseGetGroups;
-		return $response;
+		return contracts::getGroupsInformation();
 	}
 
 	public function getContractToShow($idContract){
@@ -101,7 +82,7 @@ class ctr_contracts{
 
 		ctr_contracts::clearFolder();
 
-		$folderPath = dirname(dirname(__DIR__)) . "/public/pdfs/";
+		$folderPath = dirname(dirname(__DIR__)) . "/public/files/";
 		$zip_Array = explode(";base64,", $dataFile);
 		$zip_contents = base64_decode($zip_Array[1]);
 		$file = $folderPath . $nameFile;
@@ -110,33 +91,40 @@ class ctr_contracts{
 		if(strstr($nameFile, "detalle_facturas") != FALSE){
 			$zip = new ZipArchive();
 			$descompressFile = $zip->open($file);
-			if($descompressFile == TRUE){
+			if($descompressFile === TRUE){
 				$zip->extractTo($folderPath);
-				$zip->deleteName($folderPath . $nameFile);
 				$zip->close();
-				$zip = new ZipArchive;
-				$descompressFile = $zip->open($folderPath . "Facturas_Movil.zip");
-				if($descompressFile == TRUE){
-					$zip->extractTo($folderPath . "/movil/");
-					$zip->deleteName($folderPath . "Facturas_Movil.zip");
-					$zip->close();
-				}else{
-					$response->result = 1;
-				}
-			}
-		}else if(strcmp($nameFile, "Facturas_Movil.zip") == 0){
-			$zip = new ZipArchive;
-			$descompressFile = $zip->open($file);
-			if ($descompressFile === TRUE){
-				$zip->extractTo($folderPath . "/movil/");
-				$zip->close();
-				$zip->deleteName($folderPath . "Facturas_Movil.zip");
-				$zip->close();
-
+				unlink($folderPath . $nameFile);
 			}
 		}
 
-		$listDir = array_diff(scandir($folderPath . "/movil/"), array('..', '.'));
+		if(file_exists($folderPath . "Facturas_Movil.zip") === TRUE){
+			$zipMovil = new ZipArchive();
+			$descompressFile = $zipMovil->open($folderPath . "Facturas_Movil.zip");
+			if ($descompressFile === TRUE){
+				$zipMovil->extractTo($folderPath . "movil/");
+				$zipMovil->close();
+				unlink($folderPath . "Facturas_Movil.zip");
+				if(file_exists($folderPath . "Facturas_Fija.zip"))
+					unlink($folderPath . "Facturas_Fija.zip");
+				return ctr_contracts::processMovilDir($folderPath . "movil/");
+			}
+		}else{
+			$zip = new ZipArchive;
+			$descompressFile = $zip->open($file);
+			if ($descompressFile === TRUE){
+				$zip->extractTo($folderPath . "contratos/");
+				$zip->close();
+				unlink($folderPath . $nameFile);
+				return ctr_contracts::processContractDir($folderPath . "contratos/");
+			}
+		}
+	}
+
+	public function processMovilDir($folderPath){
+		$response = new \stdClass();
+
+		$listDir = array_diff(scandir($folderPath), array('..', '.'));
 		if(sizeof($listDir) > 0){
 			$countNew = 0;
 			$arrayContractNotEntered = array();
@@ -158,16 +146,70 @@ class ctr_contracts{
 				$response->message = "Se descomprimió el archivo y los contratos estan preparados para ser enviados.";
 		}else{
 			$response->result = 0;
-			$response->message = "Ocurrió un error y los archivos no se pueden leer.";
+			$response->message = "Ocurrió un error y el archivo ingresado no fue descomprimido.";
 		}
 
 		return $response;
 	}
 
+	public function processContractDir($folderPath){
+		$response = new \stdClass();
+
+		$listDir = array_diff(scandir($folderPath), array('..', '.'));
+		if(sizeof($listDir) > 0){
+			$countNew = 0;
+			$arrayContractNotEntered = array();
+			foreach ($listDir as $key => $value) {
+				$fileContent = simplexml_load_file($folderPath . $value);
+				if(!is_null($fileContent)){
+					$headDetail = $fileContent->Cabezal->IdGenerador;
+					$obj = '@attributes';
+					$numberMobile = $fileContent->Detalles->Parte->Seccion->Grupo;
+					$numberMobile = json_decode(json_encode($numberMobile));
+					$numberMobile = filter_var($numberMobile->{$obj}->nombre, FILTER_SANITIZE_NUMBER_INT);
+					$responseGetContract = contracts::getContractWithNumber($headDetail->NroContrato);
+					if($responseGetContract->result == 2){
+						$contract = $responseGetContract->objectResult;
+						if(strlen($numberMobile) < 5)
+							$numberMobile = null;
+						$responseUpdate = contracts::updateContract($contract->id, $contract->usuario, $contract->email, $numberMobile, $headDetail->NroContrato, $contract->grupo, $contract->celularEnvio, $headDetail->ImporteTotFactura);
+						if($responseUpdate->result != 2)
+							$arrayContractNotEntered[] = $value;
+					}elseif ($responseGetContract->result == 1) {
+						if(strlen($headDetail->NroContrato) != 0){
+							$responseInsert = contracts::createNewContract(null, null, $numberMobile, $headDetail->NroContrato, null, null);
+							if($responseInsert->result != 2)
+								$arrayContractNotEntered[] = $value;
+						}
+					}
+				}
+			}
+			if(sizeof($arrayContractNotEntered) == 0){
+				$response->result = 2;
+				$response->message = "Todos los archivos fueron procesados y se actualizó la información de los contratos.";
+			}else{
+				$response->result = 1;
+				$response->message = "Algunos archivos no fueron procesados y la información de sus contratos no fue actualada.";
+			}
+		}
+
+		ctr_contracts::clearDirContract($folderPath);
+
+		return $response;
+	}
+
+	public function clearDirContract($folderPath){
+		$listDir = scandir($folderPath);
+		foreach ($listDir as $key => $value) {
+			if(!is_dir($value))
+				unlink($folderPath . $value);
+		}
+	}
+
 	public function notifyOneContract($idContract){
 		$response = new \stdClass();
 
-		$folderPath = dirname(dirname(__DIR__)) . "/public/pdfs/movil/";
+		$folderPath = dirname(dirname(__DIR__)) . "/public/files/movil/";
 		if(file_exists($folderPath)){
 			$listDir = array_diff(scandir($folderPath), array('..', '.'));
 			if(sizeof($listDir) > 0){
@@ -267,7 +309,7 @@ class ctr_contracts{
 	public function notifyAllContract(){
 		$response = new \stdClass();
 
-		$folderPath = dirname(dirname(__DIR__)) . "/public/pdfs/movil";
+		$folderPath = dirname(dirname(__DIR__)) . "/public/files/movil";
 		if(file_exists($folderPath)){
 
 			$listDir = array_diff(scandir($folderPath), array('..', '.'));
@@ -332,7 +374,7 @@ class ctr_contracts{
 	}
 
 	public function clearFolder(){
-		$path = dirname(dirname(__DIR__)) . "/public/pdfs/";
+		$path = dirname(dirname(__DIR__)) . "/public/files/";
 		$folders = glob($path . '/*');
 		foreach($folders AS $file){
 			if(is_dir($file)){
@@ -366,34 +408,6 @@ class ctr_contracts{
 		$context = stream_context_create($opciones);
 		$result = file_get_contents($url, false, $context);
 		return $result;
-	}
-
-	public function updateContract($idContract, $name, $email, $mobile, $contract, $group, $mobileToSend){
-		$response = new \stdClass();
-
-		$responseGetContract = contracts::getContractWithID($idContract);
-		if($responseGetContract->result == 2){
-			if(strlen($email) > 1){
-				if(!filter_var($email, FILTER_VALIDATE_EMAIL)){
-					$response->result = 1;
-					$response->message = "La dirección de correo ingresada no es valida.";
-					return $response;
-				}
-			}else $email = null;
-
-			if(strlen($mobileToSend) < 1)
-				$mobileToSend = null;
-			$responseUpdateContract = contracts::updateContract($idContract, $name, $email, $mobile, $contract, $group, $mobileToSend);
-			if($responseUpdateContract->result == 2){
-				$response->result = 2;
-				$response->message = "El contracto fue modificado correctamente.";
-				$responseGetUpdatedContract = ctr_contracts::getContractToShow($responseGetContract->objectResult->id);
-				if($responseGetUpdatedContract->result == 2)
-					$response->contract = $responseGetUpdatedContract->contract;
-			}else return $responseUpdateContract;
-		}else return $responseGetContract;
-
-		return $response;
 	}
 
 	public function validateContractDontRepeat($idContract, $contract){
@@ -456,6 +470,52 @@ class ctr_contracts{
 			$response->result = 0;
 			$response->message = "El contrato que intenta ingresar ya fue cargado en la base de datos.";
 		}
+
+		return $response;
+	}
+
+	public function updateContract($idContract, $name, $email, $mobile, $contract, $group, $mobileToSend){
+		$response = new \stdClass();
+
+		$responseGetContract = contracts::getContractWithID($idContract);
+		if($responseGetContract->result == 2){
+			if(strlen($email) > 1){
+				if(!filter_var($email, FILTER_VALIDATE_EMAIL)){
+					$response->result = 1;
+					$response->message = "La dirección de correo ingresada no es valida.";
+					return $response;
+				}
+			}else $email = null;
+
+			if(strlen($mobileToSend) < 1)
+				$mobileToSend = null;
+			$responseUpdateContract = contracts::updateContract($idContract, $name, $email, $mobile, $contract, $group, $mobileToSend, $responseGetContract->objectResult->importe);
+			if($responseUpdateContract->result == 2){
+				$response->result = 2;
+				$response->message = "El contracto fue modificado correctamente.";
+				$responseGetUpdatedContract = ctr_contracts::getContractToShow($responseGetContract->objectResult->id);
+				if($responseGetUpdatedContract->result == 2)
+					$response->contract = $responseGetUpdatedContract->contract;
+			}else return $responseUpdateContract;
+		}else return $responseGetContract;
+
+		return $response;
+	}
+
+	public function deleteContractSelected($idContract){
+		$response = new \stdClass();
+
+		$responseGetContract = contracts::getContractWithID($idContract);
+		if($responseGetContract->result == 2){
+			$responseDeleteContract = contracts::deleteContractSelected($idContract);
+			if($responseDeleteContract->result == 2){
+				$response->result = 2;
+				$response->message = "El contrato seleccionado fue borrado correctamente";
+			}else{
+				$response->result = 0;
+				$response->message = "El contrato seleccionado no fue borrado por un error interno.";
+			}
+		}else return $responseGetContract;
 
 		return $response;
 	}

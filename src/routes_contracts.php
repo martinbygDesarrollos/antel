@@ -15,7 +15,7 @@ return function (App $app){
 		$responseFunction = ctr_users::validateCurrentSession();
 		if($responseFunction->result == 2){
 			$args['session'] = $_SESSION['ADMIN'];
-			$args['responseGroups'] = ctr_contracts::getGroupsContract();
+			$args['responseGroups'] = ctr_contracts::getGroupsInformation();
 			return $this->view->render($response, "contracts.twig", $args);
 		}
 		return $response->withRedirect('iniciar-sesion');
@@ -93,6 +93,16 @@ return function (App $app){
 			$group = $data['group'];
 			$mobileToSend = $data['mobileToSend'];
 			$responseFunction = ctr_contracts::updateContract($idContract, $name, $email, $mobile, $contract, $group, $mobileToSend);
+		}
+		return json_encode($responseFunction);
+	});
+
+	$app->post('/deleteContractSelected', function(Request $request, Response $response){
+		$responseFunction = ctr_users::validateCurrentSession();
+		if($responseFunction->result == 2){
+			$data = $request->getParams();
+			$idContract = $data['idContract'];
+			$responseFunction = ctr_contracts::deleteContractSelected($idContract);
 		}
 		return json_encode($responseFunction);
 	});

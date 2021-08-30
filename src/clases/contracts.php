@@ -6,16 +6,14 @@ class contracts{
 
 	public function getGroupsInformation(){
 		$responseQuery = DataBase::sendQuery("SELECT DISTINCT grupo, COUNT(grupo) as cantGrupo FROM contratos WHERE grupo IS NOT NULL GROUP BY grupo", null, "LIST");
-		if($responseQuery->result == 1)
-			$responseQuery->message = "No se obtuvieron registrso por contratos de la base de datos.";
-
-		return $responseQuery;
-	}
-
-	public function getGroupsContract(){
-		$responseQuery = DataBase::sendQuery("SELECT DISTINCT grupo FROM contratos WHERE grupo IS NOT NULL", null, "LIST");
-		if($responseQuery->result == 1)
-			$responseQuery->message = "No se encontraron registros en la base de datos para obtener sus grupos.";
+		if($responseQuery->result ==2){
+			$totContracts = 0;
+			foreach ($responseQuery->listResult as $key => $row) {
+				$totContracts += $row['cantGrupo'];
+			}
+			$responseQuery->totContracts = $totContracts;
+		}else if($responseQuery->result == 1)
+		$responseQuery->message = "No se obtuvieron registrso por contratos de la base de datos.";
 
 		return $responseQuery;
 	}
@@ -36,6 +34,14 @@ class contracts{
 			if(is_null($responseQuery->objectResult->email))
 				$responseQuery->objectResult->email = "No especificado";
 
+			if(is_null($responseQuery->objectResult->fechaNotificacion))
+				$responseQuery->objectResult->fechaNotificacion = "No notificado";
+			else $responseQuery->objectResult->fechaNotificacion = handleDateTime::formatDateBarWithMonth($responseQuery->objectResult->fechaNotificacion);
+
+			if(is_null($responseQuery->objectResult->importe))
+				$responseQuery->objectResult->importe = "No especificado";
+			else $responseQuery->objectResult->importe = "$ " . number_format($responseQuery->objectResult->importe, 2,",",".");
+
 		}else if($responseQuery->result == 1){
 			$responseQuery->message = "El contrato seleccionado no fue encontrado en la base de datos.";
 		}
@@ -51,16 +57,16 @@ class contracts{
 		return DataBase::sendQuery("UPDATE contratos SET enviarCelular = ? WHERE id = ?", array('is', $newStatus, $idContract), "BOOLE");
 	}
 
-	public function updateContract($idContract, $name, $email, $mobile, $contract, $group, $mobileToSend){
-		return DataBase::sendQuery("UPDATE contratos SET grupo = ?, usuario = ?, contrato = ?, celular = ?, celularEnvio = ?, email = ? WHERE id = ?", array('sssiisi', $group, $name, $contract, $mobile, $mobileToSend, $email, $idContract), "BOOLE");
-	}
-
 	public function validateContractDontRepeat($idContract, $contract){
 		return DataBase::sendQuery("SELECT * FROM contratos WHERE contrato = ? AND id != ? ", array('si', $contract, $idContract), "OBJECT");
 	}
 
 	public function getContractWithID($idContract){
-		return DataBase::sendQuery("SELECT * FROM contratos WHERE id = ?", array('i', $idContract), "OBJECT");
+		$responseQuery = DataBase::sendQuery("SELECT * FROM contratos WHERE id = ?", array('i', $idContract), "OBJECT");
+		if($responseQuery->result == 1)
+			$responseQuery->message = "El identificador de contrato seleccionado no corresponde a uno registrado en la base de datos.";
+
+		return $responseQuery;
 	}
 
 	public function createNewContract($name, $email, $mobile, $contract, $group, $mobileToSend){
@@ -73,6 +79,14 @@ class contracts{
 			$statusEmail = 0;
 
 		return DataBase::sendQuery("INSERT INTO contratos(grupo, usuario, contrato, celular, celularEnvio, enviarCelular, email, enviarEmail) VALUES(?,?,?,?,?,?,?,?)", array('sssiiisi', $group, $name, $contract, $mobile, $mobileToSend, $statusMobile, $email, $statusEmail), "BOOLE");
+	}
+
+	public function updateContract($idContract, $name, $email, $mobile, $contract, $group, $mobileToSend, $importe){
+		return DataBase::sendQuery("UPDATE contratos SET grupo = ?, usuario = ?, contrato = ?, celular = ?, celularEnvio = ?, email = ?, importe = ? WHERE id = ?", array('sssiisdi', $group, $name, $contract, $mobile, $mobileToSend, $email, $importe, $idContract), "BOOLE");
+	}
+
+	public function deleteContractSelected($idContract){
+		return DataBase::sendQuery("DELETE FROM contratos WHERE id = ?", array('i', $idContract), "BOOLE");
 	}
 
 	public function getContractWithNumber($contract){
@@ -115,7 +129,7 @@ class contracts{
 		if($responseQuery->result == 2){
 			$newLastId = $lastId;
 			$arrayResult = array();
-			$notSpecified = "No especificado.";
+			$notSpecified = "No especificado";
 			foreach ($responseQuery->listResult as $key => $row) {
 				if($newLastId > $row['id']) $newLastId = $row['id'];
 
@@ -143,6 +157,10 @@ class contracts{
 				else
 					$row['fechaNotificacion'] = handleDateTime::formatDateBarWithMonth($row['fechaNotificacion']);
 
+				if(is_null($row['importe']))
+					$row['importe'] = 'No especificado';
+				else $row['importe'] = "$ " . number_format($row['importe'],2,",",".");
+
 				$arrayResult[] = $row;
 			}
 			$responseQuery->listResult = $arrayResult;
@@ -166,7 +184,7 @@ class contracts{
 
 		$eol = "\r\n";
 
-		$headers = "From: antel.byg.uy <info@antel.byg.uy>" . $eol;
+		$headers = "From: antel.byg.uy <antel@byg.uy>" . $eol;
 		$headers .= "MIME-Version: 1.0" . $eol;
 		$headers .= "Content-Type: multipart/mixed; boundary=\"" . $separator . "\"" . $eol;
 		$headers .= "Content-Transfer-Encoding: 7bit" . $eol;
