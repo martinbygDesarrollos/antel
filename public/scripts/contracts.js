@@ -58,6 +58,18 @@ function createRow(id, group, user, contract, importe, mobilePhone, mobilePhoneT
 	return row;
 }
 
+function generateExcel(){
+	let response = sendPost("generateExcel", null);
+	if(response.result == 2){
+		const linkSource = `data:application/vnd.ms-excel;base64,${ response.excel }`;
+		const downloadLink = document.createElement("a");
+		const fileName = "contratos_antel.xlsx";
+		downloadLink.href = linkSource;
+		downloadLink.download = fileName;
+		downloadLink.click();
+	}
+}
+
 function showModalDeleteContract(idContract){
 	$('#modalDeleteContract').modal();
 	$('#buttonConfirmDelete').off('click');

@@ -21,6 +21,15 @@ return function (App $app){
 		return $response->withRedirect('iniciar-sesion');
 	})->setName("Contracts");
 
+	$app->post('/generateExcel', function(Request $request, Response $response){
+		$responseFunction = ctr_users::validateCurrentSession();
+		if($responseFunction->result == 2){
+			$data = $request->getParams();
+			$responseFunction = ctr_contracts::exportExcelContract();
+		}
+		return json_encode($responseFunction);
+	});
+
 	$app->post('/getListContracts', function(Request $request, Response $response){
 		$responseFunction = ctr_users::validateCurrentSession();
 		if($responseFunction->result == 2){

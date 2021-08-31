@@ -7,6 +7,9 @@
 		<div class="card-header d-flex justify-content-between bg-primary text-white">
 			<h5>{{ responseGroups.totContracts }}&nbsp;Contratos</h5>
 			<div>
+				<button class="btn btn-primary shadow-sm mr-3" onclick="generateExcel()" data-toggle="tooltip" data-placement="right" title="Descargar excel de contratos">
+					<i class="fas fa-download"></i>
+				</button>
 				<button class="btn btn-primary shadow-sm mr-3" data-toggle="modal" data-target="#modalSendNotification" data-toggle="tooltip" data-placement="right" title="Enviar todas las facturas">
 					<i class="far fa-paper-plane"></i>
 				</button>

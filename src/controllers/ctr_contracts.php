@@ -2,8 +2,27 @@
 
 require_once '../src/clases/contracts.php';
 require_once '../src/utils/handle_date_time.php';
+require_once '../src/utils/generate_excel.php';
 
 class ctr_contracts{
+
+	public function exportExcelContract(){
+		$response = new \stdClass();
+
+		$responseGetContracts = contracts::getAllContracts();
+		if($responseGetContracts->result == 2){
+			$excelBase64 = generateExcel::createExcel($responseGetContracts->listResult);
+			if(!is_null($excelBase64)){
+				$response->result = 2;
+				$response->excel = $excelBase64;
+			}else{
+				$response->result = 0;
+				$response->message = "Ocurrió un error y el archivo excel no fue generado.";
+			}
+		}else return $responseGetContracts;
+
+		return $response;
+	}
 
 	public function getGroupsInformation(){
 		return contracts::getGroupsInformation();
