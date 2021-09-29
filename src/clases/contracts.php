@@ -183,14 +183,13 @@ class contracts{
 	public function sendMail($filePath, $fileName, $contract, $mailTo){
 		$file = $filePath . $fileName;
 
+		$separator = md5(time());
+		$eol = "\r\n";
+
 		$subject = 'Contrato N° ' . $contract;
-		$message = 'Factura por contrato Antel';
+		$message = 'Antel vence ' . handleDateTime::getFechaVencimiento();
 		$content = file_get_contents($file);
 		$content = chunk_split(base64_encode($content));
-
-		$separator = md5(time());
-
-		$eol = "\r\n";
 
 		$headers = "From: antel.byg.uy <antel@byg.uy>" . $eol;
 		$headers .= "MIME-Version: 1.0" . $eol;

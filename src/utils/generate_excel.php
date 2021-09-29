@@ -1,6 +1,6 @@
 <?php
-require_once '/home2/byguyqrd/utils/PHPExcel/Classes/PHPExcel.php';
-//require_once 'C:/xampp/htdocs/utils/PHPExcel/Classes/PHPExcel.php';
+
+require_once URL_UTILS . 'PHPExcel/Classes/PHPExcel.php';
 
 class generateExcel{
 

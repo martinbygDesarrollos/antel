@@ -4,5 +4,9 @@ function validateEmail(email) {
 }
 
 function getSiteURL(){
-	return '/';
+	let url = window.location.href;
+	if(url.includes("localhost"))
+		return '/antel/public/';
+	else
+		return '/';
 }

@@ -265,6 +265,7 @@ class ctr_contracts{
 							if($responseGetContract->objectResult->enviarEmail == 1){
 								if(!is_null($responseGetContract->objectResult->email)){
 									$responseEmail = contracts::sendMail($folderPath, $value, $numberContract, $responseGetContract->objectResult->email);
+									return $responseEmail;
 									if($responseEmail){
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
 									}else{
@@ -349,7 +350,7 @@ class ctr_contracts{
 									$resultSendEmail = contracts::sendMail($folderPath, $value, $numberContract, $responseGetContract->objectResult->email);
 									if($resultSendEmail){
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
-										sleep(4);
+										sleep(1);
 									}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
 								}
 							}
@@ -365,7 +366,7 @@ class ctr_contracts{
 									$responseSent = json_decode(ctr_contracts::sendWhatsApp(base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber));
 									if($responseSent->sent == TRUE){
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
-										sleep(12);
+										sleep(5);
 									}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
 								}
 							}
@@ -409,7 +410,6 @@ class ctr_contracts{
 
 	function sendWhatsApp($dataFile, $nameFile, $mobilePhone) {
 		$url = 'https://api.chat-api.com/instance312895/sendFile?token=45ek2wrhgr3rg33m';
-
 		$json = '{
 			"body": "data:application/pdf;base64,' . $dataFile . '",
 			"filename": "' . $nameFile . '",
@@ -425,8 +425,25 @@ class ctr_contracts{
 		);
 
 		$context = stream_context_create($opciones);
-		$result = file_get_contents($url, false, $context);
-		return $result;
+		$result = json_decode(file_get_contents($url, false, $context));
+		if($result->sent == TRUE){
+			$urlMessage = 'https://api.chat-api.com/instance312895/message?token=45ek2wrhgr3rg33m';
+			$jsonMessage = '{
+				"body": "Antel vence: '. handleDateTime::getFechaVencimiento() .'",
+				"phone": 598'. $mobilePhone . '
+			}';
+
+			$opcionesMessage = array('http' =>
+				array(
+					'method'  => 'POST',
+					'header'  => 'Content-type: application/json',
+					'content' => $jsonMessage
+				)
+			);
+
+			$contextMessage = stream_context_create($opcionesMessage);
+			return file_get_contents($urlMessage, false, $contextMessage);
+		}
 	}
 
 	public function validateContractDontRepeat($idContract, $contract){
