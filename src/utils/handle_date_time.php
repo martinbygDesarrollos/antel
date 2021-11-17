@@ -16,7 +16,7 @@ class handleDateTime{
 
 	public function getFechaVencimiento(){
 		date_default_timezone_set('America/Montevideo');
-		$date = date('Y-m-d', strtotime("+ 1 month", strtotime(date('Y-m-d'))));
+		$date = date('Y-m-d', strtotime("+ 1 day", strtotime(date('Y-m-d'))));
 		return "23-" . substr($date, 5, 2)  . "-" . substr($date, 0, 4);
 	}
 }
