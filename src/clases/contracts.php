@@ -218,4 +218,12 @@ class contracts{
 	public function setMobilePhoneFormat($number){
 		return "0" . substr($number, 0, 2) . " " . substr($number, 2, 3) . " " . substr($number, 5, 3);
 	}
+
+	public function setCeroAllAmountContracts(){
+		$responseQuery = DataBase::sendQuery("UPDATE `contratos` SET `importe` = NULL", array(), "BOOLE");
+		if($responseQuery->result == 1)
+			$responseQuery->message = "No se pudo actualizar el importe de los contratos.";
+
+		return $responseQuery;
+	}
 }

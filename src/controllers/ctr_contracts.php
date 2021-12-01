@@ -117,6 +117,10 @@ class ctr_contracts{
 			}
 		}
 
+		$resultSetAmountContracts = ctr_contracts::setCeroAllAmountContracts();
+		if( $resultSetAmountContracts->result != 2){
+			return $resultSetAmountContracts;
+		}
 		if(file_exists($folderPath . "Facturas_Movil.zip") === TRUE){
 			$zipMovil = new ZipArchive();
 			$descompressFile = $zipMovil->open($folderPath . "Facturas_Movil.zip");
@@ -208,13 +212,17 @@ class ctr_contracts{
 				$response->message = "Todos los archivos fueron procesados y se actualizó la información de los contratos.";
 			}else{
 				$response->result = 1;
-				$response->message = "Algunos archivos no fueron procesados y la información de sus contratos no fue actualada.";
+				$response->message = "Algunos archivos no fueron procesados y la información de sus contratos no fue actualizada.";
 			}
 		}
 
 		ctr_contracts::clearDirContract($folderPath);
 
 		return $response;
+	}
+
+	public function setCeroAllAmountContracts(){
+		return contracts::setCeroAllAmountContracts();
 	}
 
 	public function clearDirContract($folderPath){
