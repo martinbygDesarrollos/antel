@@ -327,8 +327,7 @@ class ctr_contracts{
 				$response->message = "No se encontraron los archivos del zip cargado.";
 			}
 		}else{
-			$response->result = 0;
-			$response->message = "Debe cargar nuevos contratos para enviar.";
+			$response = ctr_contracts::notifyOneContractWithoutPdf($idContract);
 		}
 
 		return $response;
@@ -394,8 +393,91 @@ class ctr_contracts{
 				$response->message = "Ocurrió un error y los archivos no se pueden leer.";
 			}
 		}else{
-			$response->result = 0;
-			$response->message = "Debe cargar nuevos contratos para enviar.";
+			$response = ctr_contracts::notifyAllContractWithoutPdf();
+		}
+
+		return $response;
+	}
+
+	public function notifyOneContractWithoutPdf($idContract){
+		$response = new \stdClass();
+		//ver en la tabla si de ese id de contrato se envia notif por correo o mail
+		$lastNotification = handleDateTime::getDateLastNotification();
+		$responseGetContract = contracts::getContractWithID($idContract);
+		$expiredDate = handleDateTime::getFechaVencimiento();
+		if( $responseGetContract && $responseGetContract->result == 2){
+			if($responseGetContract->objectResult->enviarEmail == 1){
+				if(!is_null($responseGetContract->objectResult->email)){
+					$responseEmail = contracts::sendMailWithoutPdf($responseGetContract->objectResult->contrato, $responseGetContract->objectResult->email, $responseGetContract->objectResult->importe,$expiredDate);
+					if($responseEmail){
+						contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, null);
+						sleep(1);
+					}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
+				}
+			}
+
+			if($responseGetContract->objectResult->enviarCelular == 1){
+				$tempMobileNumber = null;
+				if(!is_null($responseGetContract->objectResult->celularEnvio))
+					$tempMobileNumber = $responseGetContract->objectResult->celularEnvio;
+				else if(!is_null($responseGetContract->objectResult->celular))
+					$tempMobileNumber = $responseGetContract->objectResult->celular;
+
+				if(!is_null($tempMobileNumber)){
+					$responseMovil = json_decode(ctr_contracts::sendWhatsAppWithoutPdf($tempMobileNumber, $responseGetContract->objectResult->importe));
+					if($responseMovil->sent == TRUE){
+						contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, null);
+						sleep(5);
+					}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
+				}
+			}
+
+			if($responseGetContract->objectResult->enviarEmail == 1 && $responseGetContract->objectResult->enviarCelular == 1){
+				if($responseEmail == TRUE && $responseMovil->sent == TRUE){
+					$response->result = 2;
+					$response->message = "La factura fue enviado correctamente a través de WhatsApp y correo.";
+				}else if($responseEmail == FALSE && $responseMovil->sent == FALSE){
+					$response->result = 0;
+					$response->message = "Ocurrió un error y el usuario no fue notificado a través de WhatsApp o correo.";
+				}else{
+					$response->result = 1;
+					if($responseEmail == FALSE)
+						$response->message = "La factura fue enviada a través de WhatsApp, el envio por correo falló.";
+					else
+						$response->message = "La factura fue enviada a través del correo, el envio por WhatsApp falló.";
+				}
+			}else if($responseGetContract->objectResult->enviarEmail == 1){
+				if($responseEmail == TRUE){
+					$response->result = 2;
+					$response->message = "La factura fue enviada correctamente por correo.";
+				}else{
+					$response->result = 0;
+					$response->message = "Ocurrió un error y la factura no fue enviada a través del correo.";
+				}
+			}else if($responseGetContract->objectResult->enviarCelular == 1){
+				if($responseMovil->sent == TRUE){
+					$response->result = 2;
+					$response->message = "La factura fue enviada correctamente por WhatsApp.";
+				}else{
+					$response->result = 0;
+					$response->message = "Ocurrió un error y la factura no fue enviada a través de WhatsApp.";
+				}
+			}
+
+			return $response;
+		}
+	}
+
+	public function notifyAllContractWithoutPdf(){
+		$response = new \stdClass();
+		$arrayErrors = array();
+		//por sql traer todos los id de contratos que tienen envio por celular o mail activado e importe mayor a cero y distinto de nulL
+		$allNumberContracts = contracts::getAllContractsToNotify();
+		foreach ($allNumberContracts->listResult as $key => $value) {
+			$responseNotifyOne = ctr_contracts::notifyOneContractWithoutPdf($value['id']);
+			if ( $responseNotifyOne && $responseNotifyOne->result != 2){
+				$arrayErrors[] = $responseNotifyOne->message;
+			}else $response = $responseNotifyOne;
 		}
 
 		return $response;
@@ -452,6 +534,26 @@ class ctr_contracts{
 			$contextMessage = stream_context_create($opcionesMessage);
 			return file_get_contents($urlMessage, false, $contextMessage);
 		}
+	}
+
+	function sendWhatsAppWithoutPdf($mobilePhone, $amount) {
+
+		$urlMessage = 'https://api.chat-api.com/instance312895/message?token=45ek2wrhgr3rg33m';
+		$jsonMessage = '{
+			"body": "Antel importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento().'",
+			"phone": 598'. $mobilePhone . '
+		}';
+
+		$opcionesMessage = array('http' =>
+			array(
+				'method'  => 'POST',
+				'header'  => 'Content-type: application/json',
+				'content' => $jsonMessage
+			)
+		);
+
+		$contextMessage = stream_context_create($opcionesMessage);
+		return file_get_contents($urlMessage, false, $contextMessage);
 	}
 
 	public function validateContractDontRepeat($idContract, $contract){

@@ -215,6 +215,31 @@ class contracts{
 			return FALSE;
 	}
 
+	public function sendMailWithoutPdf($contract, $mailTo, $amount, $expiredDate){
+		$separator = md5(time());
+		$eol = "\r\n";
+
+		$subject = 'Contrato N° ' . $contract;
+		$message = 'Antel importe: $'. $amount.' vence: ' .$expiredDate. '. ';
+
+		$header  = 'MIME-Version: 1.0' . "\r\n";
+		$header .= 'Content-type:text/html; charset=UTF-8' . "\r\n";
+		$header .= "From: antel.byg.uy <antel@byg.uy>" . "\r\n";
+
+		$body = '<html>' .
+		'<head>' .
+		'<title>Antel</title>' .
+		'</head>' .
+		'<body><p>'.$message.'</p></body>' .
+		'</html>';
+
+		$result = mail($mailTo, $subject, $body, $header);
+		if($result)
+			return TRUE;
+		else
+			return FALSE;
+	}
+
 	public function setMobilePhoneFormat($number){
 		return "0" . substr($number, 0, 2) . " " . substr($number, 2, 3) . " " . substr($number, 5, 3);
 	}
@@ -223,6 +248,14 @@ class contracts{
 		$responseQuery = DataBase::sendQuery("UPDATE `contratos` SET `importe` = NULL", array(), "BOOLE");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "No se pudo actualizar el importe de los contratos.";
+
+		return $responseQuery;
+	}
+
+	public function getAllContractsToNotify(){
+		$responseQuery = DataBase::sendQuery("SELECT * FROM `contratos` WHERE (enviarCelular = 1 OR enviarEmail = 1) AND importe > 0 ORDER BY `id`  DESC", array(), "LIST");
+		if($responseQuery->result == 1)
+			$responseQuery->message = "No se encontraron contratos.";
 
 		return $responseQuery;
 	}
