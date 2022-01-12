@@ -408,7 +408,8 @@ class ctr_contracts{
 		if( $responseGetContract && $responseGetContract->result == 2){
 			if($responseGetContract->objectResult->enviarEmail == 1){
 				if(!is_null($responseGetContract->objectResult->email)){
-					$responseEmail = contracts::sendMailWithoutPdf($responseGetContract->objectResult->contrato, $responseGetContract->objectResult->email, $responseGetContract->objectResult->importe,$expiredDate);
+					$servicio = $responseGetContract->objectResult->celular;
+					$responseEmail = contracts::sendMailWithoutPdf($servicio, $responseGetContract->objectResult->contrato, $responseGetContract->objectResult->email, $responseGetContract->objectResult->importe,$expiredDate);
 					if($responseEmail){
 						contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, null);
 						sleep(1);
@@ -540,7 +541,27 @@ class ctr_contracts{
 
 		$urlMessage = 'https://api.chat-api.com/instance312895/message?token=45ek2wrhgr3rg33m';
 		$jsonMessage = '{
-			"body": "Antel importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento().'",
+			"body": "Antel servicio: 0'.$mobilePhone.' importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento().'",
+			"phone": 598'. $mobilePhone . '
+		}';
+
+		$opcionesMessage = array('http' =>
+			array(
+				'method'  => 'POST',
+				'header'  => 'Content-type: application/json',
+				'content' => $jsonMessage
+			)
+		);
+
+		$contextMessage = stream_context_create($opcionesMessage);
+		return file_get_contents($urlMessage, false, $contextMessage);
+	}
+
+	function sendWhatsAppNotification($mobilePhone, $message) {
+
+		$urlMessage = 'https://api.chat-api.com/instance312895/message?token=45ek2wrhgr3rg33m';
+		$jsonMessage = '{
+			"body": $message,
 			"phone": 598'. $mobilePhone . '
 		}';
 
