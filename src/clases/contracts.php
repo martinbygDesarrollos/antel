@@ -215,12 +215,12 @@ class contracts{
 			return FALSE;
 	}
 
-	public function sendMailWithoutPdf($contract, $mailTo, $amount, $expiredDate){
+	public function sendMailWithoutPdf($servicio, $contract, $mailTo, $amount, $expiredDate){
 		$separator = md5(time());
 		$eol = "\r\n";
 
 		$subject = 'Contrato N° ' . $contract;
-		$message = 'Antel importe: $'. $amount.' vence: ' .$expiredDate. '. ';
+		$message = 'Antel servicio: 0'. $servicio .', importe: $'. $amount.', vence: ' .$expiredDate. '. ';
 
 		$header  = 'MIME-Version: 1.0' . "\r\n";
 		$header .= 'Content-type:text/html; charset=UTF-8' . "\r\n";
@@ -253,7 +253,9 @@ class contracts{
 	}
 
 	public function getAllContractsToNotify(){
-		$responseQuery = DataBase::sendQuery("SELECT * FROM `contratos` WHERE (enviarCelular = 1 OR enviarEmail = 1) AND importe > 0 ORDER BY `id`  DESC", array(), "LIST");
+
+		$lastNotification = handleDateTime::getDateLastNotification();
+		$responseQuery = DataBase::sendQuery("SELECT * FROM `contratos` WHERE (enviarCelular = 1 OR enviarEmail = 1) and importe >= 0 and ( fechaNotificacion IS NULL or fechaNotificacion < ?)", array('s', $lastNotification), "LIST");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "No se encontraron contratos.";
 
