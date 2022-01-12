@@ -164,6 +164,17 @@ return function (App $app){
 		}
 		return json_encode($responseFunction);
 	});
+
+	$app->post('/sendMessage', function(Request $request, Response $response){
+		$responseFunction = ctr_users::validateCurrentSession();
+		if($responseFunction->result == 2){
+			$data = $request->getParams();
+			$message = $data['message'];
+			$phone = $data['phone'];
+			return json_encode(ctr_contracts::sendWhatsAppNotification($message, $phone));
+		}
+		return json_encode($responseFunction);
+	});
 }
 
 ?>
