@@ -138,6 +138,9 @@ function sendNotificaion(){
 	sendAsyncPost("notifyAllContract", null)
 	.then(function(response){
 		$('#modalOnLoad').modal('hide');
+		sendAsyncPost("sendMessage", {message: "El proceso de contacto con todos los usuarios ha finalizado", phone:phoneNotifications })
+		.then((response)=>{console.log("se notificó el hecho de haber terminado el envio de archivos.");})
+		.catch((response)=>{console.log(response+": NO se notificó el hecho de haber terminado el envio de archivos.");});
 		showReplyMessage(response.result, response.message, "Enviar notificación", null);
 	})
 	.catch(function(response){
