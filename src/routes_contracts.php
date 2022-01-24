@@ -171,7 +171,7 @@ return function (App $app){
 			$data = $request->getParams();
 			$message = $data['message'];
 			$phone = $data['phone'];
-			return json_encode(ctr_contracts::sendWhatsAppNotification($message, $phone));
+			return json_encode(ctr_contracts::sendWhatsAppNotification($phone, $message));
 		}
 		return json_encode($responseFunction);
 	});

@@ -121,8 +121,19 @@ function showModalSendOneNotificacion(idContract){
 			.then(function(response){
 				$('#modalOnLoad').modal('hide');
 				showReplyMessage(response.result, response.message, "Enviar notificación", null);
+				if ( response.result == 2 ){
+					console.log("Terminó el proceso correctamente.");
+					notifyProcessFinished("Terminó el proceso correctamente.");
+				}else{
+					console.log("Terminó el proceso. Ocurrió un error.");
+					console.log(response);
+					notifyProcessFinished("Terminó el proceso. Ocurrió un error. "+response.message);
+				}
 			})
 			.catch(function(response){
+				console.log("Terminó el proceso. Ocurrió un error.");
+				console.log(response);
+				notifyProcessFinished("Terminó el proceso. Ocurrió un error. "+response.message);
 				$('#modalOnLoad').modal('hide');
 				showReplyMessage(response.result, response.message, "Enviar notificación", null);
 			})
@@ -137,13 +148,21 @@ function sendNotificaion(){
 	$('#textModalOnLoad').html("Se están enviando los contratos...");
 	sendAsyncPost("notifyAllContract", null)
 	.then(function(response){
+		if ( response.result == 2 ){
+			console.log("Terminó el proceso correctamente.");
+			notifyProcessFinished("Terminó el proceso correctamente.");
+		}else{
+			console.log("Terminó el proceso. Ocurrió un error.");
+			console.log(response);
+			notifyProcessFinished("Terminó el proceso. Ocurrió un error. "+response.message);
+		}
 		$('#modalOnLoad').modal('hide');
-		sendAsyncPost("sendMessage", {message: "El proceso de contacto con todos los usuarios ha finalizado", phone:phoneNotifications })
-		.then((response)=>{console.log("se notificó el hecho de haber terminado el envio de archivos.");})
-		.catch((response)=>{console.log(response+": NO se notificó el hecho de haber terminado el envio de archivos.");});
 		showReplyMessage(response.result, response.message, "Enviar notificación", null);
 	})
 	.catch(function(response){
+		console.log("Terminó el proceso correctamente.");
+		notifyProcessFinished("Terminó el proceso. Ocurrió un error. "+response.message);
+		console.log(response);
 		$('#modalOnLoad').modal('hide');
 		showReplyMessage(response.result, response.message, "Enviar notificación", null);
 	})

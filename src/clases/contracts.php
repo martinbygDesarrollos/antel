@@ -180,14 +180,14 @@ class contracts{
 		return $responseQuery;
 	}
 
-	public function sendMail($filePath, $fileName, $contract, $mailTo){
+	public function sendMail($phoneNumber, $userName, $filePath, $fileName, $contract, $mailTo){
 		$file = $filePath . $fileName;
 
 		$separator = md5(time());
 		$eol = "\r\n";
 
 		$subject = 'Contrato N° ' . $contract;
-		$message = 'Antel vence ' . handleDateTime::getFechaVencimiento();
+		$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence ' . handleDateTime::getFechaVencimiento();
 		$content = file_get_contents($file);
 		$content = chunk_split(base64_encode($content));
 
@@ -215,12 +215,12 @@ class contracts{
 			return FALSE;
 	}
 
-	public function sendMailWithoutPdf($servicio, $contract, $mailTo, $amount, $expiredDate){
+	public function sendMailWithoutPdf($servicio, $usuario, $contract, $mailTo, $amount, $expiredDate){
 		$separator = md5(time());
 		$eol = "\r\n";
 
 		$subject = 'Contrato N° ' . $contract;
-		$message = 'Antel servicio: 0'. $servicio .', importe: $'. $amount.', vence: ' .$expiredDate. '. ';
+		$message = 'Antel 0'. $servicio .' '.$usuario.', importe: $'. $amount.', vence: ' .$expiredDate. '. ';
 
 		$header  = 'MIME-Version: 1.0' . "\r\n";
 		$header .= 'Content-type:text/html; charset=UTF-8' . "\r\n";

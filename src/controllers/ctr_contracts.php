@@ -259,7 +259,9 @@ class ctr_contracts{
 									$tempMobileNumber = $responseGetContract->objectResult->celular;
 
 								if(!is_null($tempMobileNumber)){
-									$responseMovil = json_decode(ctr_contracts::sendWhatsApp(base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber));
+									$phoneNumber = $responseGetContract->objectResult->celular;
+									$userName = $responseGetContract->objectResult->usuario;
+									$responseMovil = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber));
 									if($responseMovil->sent == TRUE){
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
 									}else{
@@ -272,7 +274,9 @@ class ctr_contracts{
 
 							if($responseGetContract->objectResult->enviarEmail == 1){
 								if(!is_null($responseGetContract->objectResult->email)){
-									$responseEmail = contracts::sendMail($folderPath, $value, $numberContract, $responseGetContract->objectResult->email);
+									$phoneNumber = $responseGetContract->objectResult->celular;
+									$userName = $responseGetContract->objectResult->usuario;
+									$responseEmail = contracts::sendMail($phoneNumber, $userName, $folderPath, $value, $numberContract, $responseGetContract->objectResult->email);
 									return $responseEmail;
 									if($responseEmail){
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
@@ -354,7 +358,9 @@ class ctr_contracts{
 						if(is_null($responseGetContract->objectResult->ultimoArchivo) || strcmp($responseGetContract->objectResult->ultimoArchivo, $value) != 0){
 							if($responseGetContract->objectResult->enviarEmail == 1){
 								if(!is_null($responseGetContract->objectResult->email)){
-									$resultSendEmail = contracts::sendMail($folderPath, $value, $numberContract, $responseGetContract->objectResult->email);
+									$phoneNumber = $responseGetContract->objectResult->celular;
+									$userName = $responseGetContract->objectResult->usuario;
+									$resultSendEmail = contracts::sendMail($phoneNumber, $userName, $folderPath, $value, $numberContract, $responseGetContract->objectResult->email);
 									if($resultSendEmail){
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
 										sleep(1);
@@ -370,7 +376,9 @@ class ctr_contracts{
 									$tempMobileNumber = $responseGetContract->objectResult->celular;
 
 								if(!is_null($tempMobileNumber)){
-									$responseSent = json_decode(ctr_contracts::sendWhatsApp(base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber));
+									$phoneNumber = $responseGetContract->objectResult->celular;
+									$userName = $responseGetContract->objectResult->usuario;
+									$responseSent = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber));
 									if($responseSent->sent == TRUE){
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
 										sleep(5);
@@ -409,7 +417,8 @@ class ctr_contracts{
 			if($responseGetContract->objectResult->enviarEmail == 1){
 				if(!is_null($responseGetContract->objectResult->email)){
 					$servicio = $responseGetContract->objectResult->celular;
-					$responseEmail = contracts::sendMailWithoutPdf($servicio, $responseGetContract->objectResult->contrato, $responseGetContract->objectResult->email, $responseGetContract->objectResult->importe,$expiredDate);
+					$usuario = $responseGetContract->objectResult->usuario;
+					$responseEmail = contracts::sendMailWithoutPdf($servicio, $usuario, $responseGetContract->objectResult->contrato, $responseGetContract->objectResult->email, $responseGetContract->objectResult->importe,$expiredDate);
 					if($responseEmail){
 						contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, null);
 						sleep(1);
@@ -425,7 +434,9 @@ class ctr_contracts{
 					$tempMobileNumber = $responseGetContract->objectResult->celular;
 
 				if(!is_null($tempMobileNumber)){
-					$responseMovil = json_decode(ctr_contracts::sendWhatsAppWithoutPdf($tempMobileNumber, $responseGetContract->objectResult->importe));
+					$phoneNumber = $responseGetContract->objectResult->celular;
+					$userName = $responseGetContract->objectResult->usuario;
+					$responseMovil = json_decode(ctr_contracts::sendWhatsAppWithoutPdf($phoneNumber, $userName, $tempMobileNumber, $responseGetContract->objectResult->importe));
 					if($responseMovil->sent == TRUE){
 						contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, null);
 						sleep(5);
@@ -474,13 +485,19 @@ class ctr_contracts{
 		$arrayErrors = array();
 		//por sql traer todos los id de contratos que tienen envio por celular o mail activado e importe mayor a cero y distinto de nulL
 		$allNumberContracts = contracts::getAllContractsToNotify();
-		foreach ($allNumberContracts->listResult as $key => $value) {
-			$responseNotifyOne = ctr_contracts::notifyOneContractWithoutPdf($value['id']);
-			if ( $responseNotifyOne && $responseNotifyOne->result != 2){
-				$arrayErrors[] = $responseNotifyOne->message;
-			}else $response = $responseNotifyOne;
+		if ( isset($allNumberContracts) ){
+			if ( $allNumberContracts->result == 2 ){
+				foreach ($allNumberContracts->listResult as $key => $value) {
+					$responseNotifyOne = ctr_contracts::notifyOneContractWithoutPdf($value['id']);
+					if ( $responseNotifyOne && $responseNotifyOne->result != 2){
+						$arrayErrors[] = $responseNotifyOne->message;
+					}else $response = $responseNotifyOne;
+				}
+			}else return $allNumberContracts;
+		}else {
+			$response->result = 0;
+			$response->message = "No se encontró resultado de los contratos a notificar.";
 		}
-
 		return $response;
 	}
 
@@ -499,7 +516,7 @@ class ctr_contracts{
 	}
 
 
-	function sendWhatsApp($dataFile, $nameFile, $mobilePhone) {
+	function sendWhatsApp($phoneNumber, $userName, $dataFile, $nameFile, $mobilePhone) {
 		$url = 'https://api.chat-api.com/instance312895/sendFile?token=45ek2wrhgr3rg33m';
 		$json = '{
 			"body": "data:application/pdf;base64,' . $dataFile . '",
@@ -520,7 +537,7 @@ class ctr_contracts{
 		if($result->sent == TRUE){
 			$urlMessage = 'https://api.chat-api.com/instance312895/message?token=45ek2wrhgr3rg33m';
 			$jsonMessage = '{
-				"body": "Antel vence: '. handleDateTime::getFechaVencimiento() .'",
+				"body": "Antel 0'.$phoneNumber.' '.$userName.', vence: '. handleDateTime::getFechaVencimiento() .'",
 				"phone": 598'. $mobilePhone . '
 			}';
 
@@ -537,11 +554,11 @@ class ctr_contracts{
 		}
 	}
 
-	function sendWhatsAppWithoutPdf($mobilePhone, $amount) {
+	function sendWhatsAppWithoutPdf($phoneNumber, $userName, $mobilePhone, $amount) {
 
 		$urlMessage = 'https://api.chat-api.com/instance312895/message?token=45ek2wrhgr3rg33m';
 		$jsonMessage = '{
-			"body": "Antel servicio: 0'.$mobilePhone.' importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento().'",
+			"body": "Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento().'",
 			"phone": 598'. $mobilePhone . '
 		}';
 
@@ -558,13 +575,11 @@ class ctr_contracts{
 	}
 
 	function sendWhatsAppNotification($mobilePhone, $message) {
-
 		$urlMessage = 'https://api.chat-api.com/instance312895/message?token=45ek2wrhgr3rg33m';
 		$jsonMessage = '{
-			"body": $message,
-			"phone": 598'. $mobilePhone . '
+			"body": "'.$message.'",
+			"phone": 598'.$mobilePhone.'
 		}';
-
 		$opcionesMessage = array('http' =>
 			array(
 				'method'  => 'POST',
@@ -574,7 +589,13 @@ class ctr_contracts{
 		);
 
 		$contextMessage = stream_context_create($opcionesMessage);
-		return file_get_contents($urlMessage, false, $contextMessage);
+		$result = file_get_contents($urlMessage, false, $contextMessage);
+		if ( isset($result) ){
+			return $result;
+		}else {
+			$result->sent = FALSE;
+			return $result;
+		}
 	}
 
 	public function validateContractDontRepeat($idContract, $contract){
