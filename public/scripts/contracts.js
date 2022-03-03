@@ -122,18 +122,18 @@ function showModalSendOneNotificacion(idContract){
 				$('#modalOnLoad').modal('hide');
 				showReplyMessage(response.result, response.message, "Enviar notificación", null);
 				if ( response.result == 2 ){
-					console.log("Terminó el proceso correctamente.");
-					notifyProcessFinished("Terminó el proceso correctamente.");
+					console.log("El proceso de envío de ANTEL, terminó correctamente.");
+					notifyProcessFinished("El proceso de envío de ANTEL, terminó correctamente.");
 				}else{
-					console.log("Terminó el proceso. Ocurrió un error.");
+					console.log("El proceso de envío de ANTEL, terminó con error.");
 					console.log(response);
-					notifyProcessFinished("Terminó el proceso. Ocurrió un error. "+response.message);
+					notifyProcessFinished("El proceso de envío de ANTEL, terminó con error. "+response.message);
 				}
 			})
 			.catch(function(response){
-				console.log("Terminó el proceso. Ocurrió un error.");
+				console.log("El proceso de envío de ANTEL, terminó con error.");
 				console.log(response);
-				notifyProcessFinished("Terminó el proceso. Ocurrió un error. "+response.message);
+				notifyProcessFinished("El proceso de envío de ANTEL, terminó con error. "+response.message);
 				$('#modalOnLoad').modal('hide');
 				showReplyMessage(response.result, response.message, "Enviar notificación", null);
 			})
@@ -149,19 +149,19 @@ function sendNotificaion(){
 	sendAsyncPost("notifyAllContract", null)
 	.then(function(response){
 		if ( response.result == 2 ){
-			console.log("Terminó el proceso correctamente.");
-			notifyProcessFinished("Terminó el proceso correctamente.");
+			console.log("El proceso de envío de ANTEL, terminó correctamente.");
+			notifyProcessFinished("El proceso de envío de ANTEL, terminó correctamente.");
 		}else{
-			console.log("Terminó el proceso. Ocurrió un error.");
+			console.log("El proceso de envío de ANTEL, terminó con error.");
 			console.log(response);
-			notifyProcessFinished("Terminó el proceso. Ocurrió un error. "+response.message);
+			notifyProcessFinished("El proceso de envío de ANTEL, terminó con error. "+response.message);
 		}
 		$('#modalOnLoad').modal('hide');
 		showReplyMessage(response.result, response.message, "Enviar notificación", null);
 	})
 	.catch(function(response){
-		console.log("Terminó el proceso correctamente.");
-		notifyProcessFinished("Terminó el proceso. Ocurrió un error. "+response.message);
+		console.log("El proceso de envío de ANTEL, terminó con error.");
+		notifyProcessFinished("El proceso de envío de ANTEL, terminó con error. "+response.message);
 		console.log(response);
 		$('#modalOnLoad').modal('hide');
 		showReplyMessage(response.result, response.message, "Enviar notificación", null);
