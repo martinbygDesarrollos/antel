@@ -115,14 +115,9 @@ class contracts{
 
 		$sqlToSearch = "";
 		if(strlen($textToSearch) > 0){
-			if(ctype_digit($textToSearch)){
-				$textMobileNumber = "";
-				if(strcmp(substr($textToSearch, 0,1), 0) == 0)
-					$textMobileNumber = substr($textToSearch, 1, strlen($textToSearch) - 1);
-				else
-					$textMobileNumber = $textToSearch;
-				$sqlToSearch = " AND (contrato LIKE '" . $textToSearch . "%' OR celular LIKE '" . $textMobileNumber . "%')" ;
-			}else $sqlToSearch = " AND usuario LIKE '" . $textToSearch . "%'";
+			foreach ( explode(" ", $textToSearch) as $value ) {
+				$sqlToSearch .= " AND (usuario LIKE '%". $value ."%' or CONCAT(contrato,'') LIKE '%". $value ."%' or CONCAT(celular,'') LIKE '%". $value ."%' or CONCAT(importe,'') LIKE '%". $value ."%')";
+			}
 		}
 
 		$sqlNotification = "";
@@ -209,10 +204,10 @@ class contracts{
 		$body .= $content . $eol;
 		$body .= "--" . $separator . "--";
 
-		if(mail($mailTo, $subject, $body, $headers))
+		/*if(mail($mailTo, $subject, $body, $headers))
 			return TRUE;
 		else
-			return FALSE;
+			return FALSE;*/
 	}
 
 	public function sendMailWithoutPdf($servicio, $usuario, $contract, $mailTo, $amount, $expiredDate){
@@ -233,11 +228,11 @@ class contracts{
 		'<body><p>'.$message.'</p></body>' .
 		'</html>';
 
-		$result = mail($mailTo, $subject, $body, $header);
+		/*$result = mail($mailTo, $subject, $body, $header);
 		if($result)
 			return TRUE;
 		else
-			return FALSE;
+			return FALSE;*/
 	}
 
 	public function setMobilePhoneFormat($number){
@@ -245,7 +240,7 @@ class contracts{
 	}
 
 	public function setCeroAllAmountContracts(){
-		$responseQuery = DataBase::sendQuery("UPDATE `contratos` SET `importe` = NULL", array(), "BOOLE");
+		$responseQuery = DataBase::sendQuery("UPDATE `contratos` SET `importe` = 0", array(), "BOOLE");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "No se pudo actualizar el importe de los contratos.";
 
