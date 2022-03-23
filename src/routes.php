@@ -21,8 +21,9 @@ return function (App $app) {
             if($responseFunction->result == 2){
                 $args['session'] = $_SESSION['ADMIN'];
                 $args['groupsInfo'] = ctr_contracts::getGroupsInformation();
-                return $this->view->render($response, "index.twig", $args);
-            }
+                //return $this->view->render($response, "index.twig", $args);
+                return $response->withStatus(302)->withHeader('Location', 'ver-contratos');
+            }else return $response->withStatus(302)->withHeader('Location', 'iniciar-sesion');
         }
         return $response->withRedirect('iniciar-sesion');
     })->setName("Start");
