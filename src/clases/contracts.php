@@ -204,10 +204,10 @@ class contracts{
 		$body .= $content . $eol;
 		$body .= "--" . $separator . "--";
 
-		/*if(mail($mailTo, $subject, $body, $headers))
+		if(mail($mailTo, $subject, $body, $headers))
 			return TRUE;
 		else
-			return FALSE;*/
+			return FALSE;
 	}
 
 	public function sendMailWithoutPdf($servicio, $usuario, $contract, $mailTo, $amount, $expiredDate){
@@ -228,11 +228,11 @@ class contracts{
 		'<body><p>'.$message.'</p></body>' .
 		'</html>';
 
-		/*$result = mail($mailTo, $subject, $body, $header);
+		$result = mail($mailTo, $subject, $body, $header);
 		if($result)
 			return TRUE;
 		else
-			return FALSE;*/
+			return FALSE;
 	}
 
 	public function setMobilePhoneFormat($number){
@@ -240,7 +240,15 @@ class contracts{
 	}
 
 	public function setCeroAllAmountContracts(){
-		$responseQuery = DataBase::sendQuery("UPDATE `contratos` SET `importe` = 0", array(), "BOOLE");
+		$responseQuery = DataBase::sendQuery("UPDATE `contratos` SET `importe` = null", array(), "BOOLE");
+		if($responseQuery->result == 1)
+			$responseQuery->message = "No se pudo actualizar el importe de los contratos.";
+
+		return $responseQuery;
+	}
+
+	public function clearUltimoArchivoContracts(){
+		$responseQuery = DataBase::sendQuery("UPDATE `contratos` SET `ultimoArchivo` = null", array(), "BOOLE");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "No se pudo actualizar el importe de los contratos.";
 
