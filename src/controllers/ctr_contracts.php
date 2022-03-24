@@ -96,10 +96,10 @@ class ctr_contracts{
 		return $response;
 	}
 
+//funcion a la que llegan los zip sean pdf o xml
 	public function loadFileToSend($nameFile, $typeFile, $dataFile){
 		$response = new \stdClass();
-
-		ctr_contracts::clearFolder();
+		//ctr_contracts::clearFolder();
 
 		$folderPath = dirname(dirname(__DIR__)) . "/public/files/";
 		$zip_Array = explode(";base64,", $dataFile);
@@ -107,6 +107,7 @@ class ctr_contracts{
 		$file = $folderPath . $nameFile;
 		file_put_contents($file, $zip_contents);
 
+		//DETALLE_FACTURAS
 		if(strstr($nameFile, "detalle_facturas") != FALSE){
 			$zip = new ZipArchive();
 			$descompressFile = $zip->open($file);
@@ -117,11 +118,10 @@ class ctr_contracts{
 			}
 		}
 
-		$resultSetAmountContracts = ctr_contracts::setCeroAllAmountContracts();
-		if( $resultSetAmountContracts->result != 2){
-			return $resultSetAmountContracts;
-		}
 		if(file_exists($folderPath . "Facturas_Movil.zip") === TRUE){
+			// se tendría que borrar la carpeta de pdf
+			ctr_contracts::clearFolderPath(["public", "files", "movil"]);
+
 			$zipMovil = new ZipArchive();
 			$descompressFile = $zipMovil->open($folderPath . "Facturas_Movil.zip");
 			if ($descompressFile === TRUE){
@@ -133,6 +133,16 @@ class ctr_contracts{
 				return ctr_contracts::processMovilDir($folderPath . "movil/");
 			}
 		}else{
+			//xml
+			//se tendría que borrar la carpeta de contratos
+			ctr_contracts::clearFolderPath(["public", "files", "contratos"]);
+
+			//como se sube zip xml se ponen en null los importes anteriores
+			$resultSetAmountContracts = ctr_contracts::setCeroAllAmountContracts();
+			if( $resultSetAmountContracts->result != 2){
+				return $resultSetAmountContracts;
+			}
+
 			$zip = new ZipArchive;
 			$descompressFile = $zip->open($file);
 			if ($descompressFile === TRUE){
@@ -144,6 +154,7 @@ class ctr_contracts{
 		}
 	}
 
+//PROCESO PARA CARGAR TODOS LOS DATOS QUE LLEGAN EN EL ZIP DE PDF
 	public function processMovilDir($folderPath){
 		$response = new \stdClass();
 
@@ -175,6 +186,7 @@ class ctr_contracts{
 		return $response;
 	}
 
+//PROCESO PARA CARGAR TODOS LOS DATOS QUE LLEGAN EN EL ZIP DE XML
 	public function processContractDir($folderPath){
 		$response = new \stdClass();
 
@@ -191,6 +203,7 @@ class ctr_contracts{
 					$numberMobile = json_decode(json_encode($numberMobile));
 					$numberMobile = filter_var($numberMobile->{$obj}->nombre, FILTER_SANITIZE_NUMBER_INT);
 					$responseGetContract = contracts::getContractWithNumber($headDetail->NroContrato);
+					//busca el numero de contrato en la base de datos, si el contrato no se encuentra registrado lo registra
 					if($responseGetContract->result == 2){
 						$contract = $responseGetContract->objectResult;
 						if(strlen($numberMobile) < 5)
@@ -223,6 +236,11 @@ class ctr_contracts{
 
 	public function setCeroAllAmountContracts(){
 		return contracts::setCeroAllAmountContracts();
+	}
+
+//SE LLAMA A ESTA FUNCIÓN CUANDO SE QUIEREN BORRAR DATOS DE PDF
+	public function clearUltimoArchivoContracts(){
+		return contracts::clearUltimoArchivoContracts();
 	}
 
 	public function clearDirContract($folderPath){
@@ -261,8 +279,10 @@ class ctr_contracts{
 								if(!is_null($tempMobileNumber)){
 									$phoneNumber = $responseGetContract->objectResult->celular;
 									$userName = $responseGetContract->objectResult->usuario;
-									$responseMovil = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber));
+									$amount = $responseGetContract->objectResult->importe;
+									$responseMovil = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber, $amount));
 									if($responseMovil->sent == TRUE){
+										//var_dump("1",$value);exit;
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
 									}else{
 										$response->result = 0;
@@ -276,9 +296,11 @@ class ctr_contracts{
 								if(!is_null($responseGetContract->objectResult->email)){
 									$phoneNumber = $responseGetContract->objectResult->celular;
 									$userName = $responseGetContract->objectResult->usuario;
-									$responseEmail = contracts::sendMail($phoneNumber, $userName, $folderPath, $value, $numberContract, $responseGetContract->objectResult->email);
+									$amount = $responseGetContract->objectResult->importe;
+									$responseEmail = contracts::sendMail($phoneNumber, $userName, $folderPath, $value, $numberContract, $responseGetContract->objectResult->email, $amount);
 									return $responseEmail;
 									if($responseEmail){
+										//var_dump("2", $value);exit;
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
 									}else{
 										$response->result = 0;
@@ -345,6 +367,7 @@ class ctr_contracts{
 
 			$listDir = array_diff(scandir($folderPath), array('..', '.'));
 			if(sizeof($listDir) > 0){
+				//var_dump("tengo pdfs");
 				$lastNotification = handleDateTime::getDateLastNotification();
 				$arrayErrors = array();
 				foreach ($listDir as $key => $value) {
@@ -360,8 +383,11 @@ class ctr_contracts{
 								if(!is_null($responseGetContract->objectResult->email)){
 									$phoneNumber = $responseGetContract->objectResult->celular;
 									$userName = $responseGetContract->objectResult->usuario;
-									$resultSendEmail = contracts::sendMail($phoneNumber, $userName, $folderPath, $value, $numberContract, $responseGetContract->objectResult->email);
+									$amount = $responseGetContract->objectResult->importe;
+									//var_dump($responseGetContract);exit;
+									$resultSendEmail = contracts::sendMail($phoneNumber, $userName, $folderPath, $value, $numberContract, $responseGetContract->objectResult->email, $amount);
 									if($resultSendEmail){
+										//var_dump("3", $responseGetContract->objectResult->id, $lastNotification, $value);exit;
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
 										sleep(1);
 									}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
@@ -369,6 +395,8 @@ class ctr_contracts{
 							}
 
 							if($responseGetContract->objectResult->enviarCelular == 1){
+								//var_dump("acá 3 celu");
+
 								$tempMobileNumber = null;
 								if(!is_null($responseGetContract->objectResult->celularEnvio))
 									$tempMobileNumber = $responseGetContract->objectResult->celularEnvio;
@@ -378,14 +406,18 @@ class ctr_contracts{
 								if(!is_null($tempMobileNumber)){
 									$phoneNumber = $responseGetContract->objectResult->celular;
 									$userName = $responseGetContract->objectResult->usuario;
-									$responseSent = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber));
+									$amount = $responseGetContract->objectResult->importe;
+									$responseSent = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber, $amount));
 									if($responseSent->sent == TRUE){
+										//var_dump("4", $value);exit;
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
 										sleep(5);
 									}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
 								}
 							}
-						}
+						}/*else {
+							var_dump("te olvidaste de cambiar o borrar el nombre del ultimo archivo pdf que se envio");exit;
+						}*/
 					}
 				}
 
@@ -420,6 +452,7 @@ class ctr_contracts{
 					$usuario = $responseGetContract->objectResult->usuario;
 					$responseEmail = contracts::sendMailWithoutPdf($servicio, $usuario, $responseGetContract->objectResult->contrato, $responseGetContract->objectResult->email, $responseGetContract->objectResult->importe,$expiredDate);
 					if($responseEmail){
+						//var_dump("6", $value);exit;
 						contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, null);
 						sleep(1);
 					}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
@@ -438,6 +471,7 @@ class ctr_contracts{
 					$userName = $responseGetContract->objectResult->usuario;
 					$responseMovil = json_decode(ctr_contracts::sendWhatsAppWithoutPdf($phoneNumber, $userName, $tempMobileNumber, $responseGetContract->objectResult->importe));
 					if($responseMovil->sent == TRUE){
+						//var_dump("7", $value);exit;
 						contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, null);
 						sleep(5);
 					}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
@@ -515,8 +549,41 @@ class ctr_contracts{
 		}
 	}
 
+//FUNCION QUE BORRA TODO EL CONTENIDO DE UNA CARPETA QUE SE PASA POR PARAMETRO EN FORMATO DE ARRAY
+//EJ ['public', 'files', 'contratos']
+	public function clearFolderPath($path){
+		$contractController = new ctr_contracts();
+		$dir = dirname(dirname(__DIR__));
+		foreach ($path as $value) {
+			$dir .= DIRECTORY_SEPARATOR . $value;
+		}
 
-	function sendWhatsApp($phoneNumber, $userName, $dataFile, $nameFile, $mobilePhone) {
+		if (!file_exists($dir)) {
+	        return true;
+	    }
+
+	    if (!is_dir($dir)) {
+	        return unlink($dir);
+	    }
+
+	    foreach (scandir($dir) as $item) {
+	        if ($item == '.' || $item == '..') {
+	            continue;
+	        }
+
+	        array_push($path, $item);
+	        //var_dump($path);
+	        if (!$contractController->clearFolderPath($path)) {
+	            return false;
+	        }else {
+	        	array_pop($path);
+	    		//var_dump("pop",$path);
+	        }
+	    }
+	    return rmdir($dir);
+	}
+
+	function sendWhatsApp($phoneNumber, $userName, $dataFile, $nameFile, $mobilePhone, $amount) {
 		$url = 'https://api.chat-api.com/instance312895/sendFile?token=45ek2wrhgr3rg33m';
 		$json = '{
 			"body": "data:application/pdf;base64,' . $dataFile . '",
@@ -535,9 +602,17 @@ class ctr_contracts{
 		$context = stream_context_create($opciones);
 		$result = json_decode(file_get_contents($url, false, $context));
 		if($result->sent == TRUE){
+			//depende del importe que se tenga se agrega en el mensaje o no
+			if ( is_null($amount) )
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. handleDateTime::getFechaVencimiento();
+			else if ( $amount == 0 )
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount; //.' vence: '. handleDateTime::getFechaVencimiento();
+			else
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
+
 			$urlMessage = 'https://api.chat-api.com/instance312895/message?token=45ek2wrhgr3rg33m';
 			$jsonMessage = '{
-				"body": "Antel 0'.$phoneNumber.' '.$userName.', vence: '. handleDateTime::getFechaVencimiento() .'",
+				"body": "'.$message.'",
 				"phone": 598'. $mobilePhone . '
 			}';
 
