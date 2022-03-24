@@ -175,14 +175,25 @@ class contracts{
 		return $responseQuery;
 	}
 
-	public function sendMail($phoneNumber, $userName, $filePath, $fileName, $contract, $mailTo){
+	public function sendMail($phoneNumber, $userName, $filePath, $fileName, $contract, $mailTo, $amount){
 		$file = $filePath . $fileName;
 
 		$separator = md5(time());
 		$eol = "\r\n";
 
+		//amount es el importe del contrato este mes, por lo que puede ser que amount sea null, 0 u otro numero
 		$subject = 'Contrato N° ' . $contract;
-		$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence ' . handleDateTime::getFechaVencimiento();
+		$date = handleDateTime::getFechaVencimiento();
+		$message = "";
+		if ( is_null($amount) )
+			$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence ' . $date;
+		else if ( $amount == 0 ){
+			$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe $'.$amount.', vence ' . $date;
+		}
+		else{
+			$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe $'.$amount.', vence ' . $date;
+		}
+
 		$content = file_get_contents($file);
 		$content = chunk_split(base64_encode($content));
 
@@ -204,6 +215,7 @@ class contracts{
 		$body .= $content . $eol;
 		$body .= "--" . $separator . "--";
 
+		//return mail("vanessa@gargano.com.uy", $subject, $body, $headers);
 		if(mail($mailTo, $subject, $body, $headers))
 			return TRUE;
 		else
@@ -228,6 +240,7 @@ class contracts{
 		'<body><p>'.$message.'</p></body>' .
 		'</html>';
 
+		//return mail("vanessa@gargano.com.uy", $subject, $body, $header);
 		$result = mail($mailTo, $subject, $body, $header);
 		if($result)
 			return TRUE;
