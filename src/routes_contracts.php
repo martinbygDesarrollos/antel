@@ -10,7 +10,9 @@ require_once 'controllers/ctr_users.php';
 
 return function (App $app){
 	$container = $app->getContainer();
+	$contractController = new ctr_contracts();
 
+//pantalla general de vista de contratos
 	$app->get('/ver-contratos', function($request, $response, $args) use ($container){
 		$responseFunction = ctr_users::validateCurrentSession();
 		if($responseFunction->result == 2){
@@ -165,6 +167,16 @@ return function (App $app){
 		return json_encode($responseFunction);
 	});
 
+	$app->post('/clearFolderContracts', function(Request $request, Response $response){
+		$responseFunction = ctr_users::validateCurrentSession();
+		if($responseFunction->result == 2){
+			$data = $request->getParams();
+			$path = $data['path'];
+			$responseFunction = ctr_contracts::clearFolderPath($path);
+		}
+		return json_encode($responseFunction);
+	});
+
 	$app->post('/sendMessage', function(Request $request, Response $response){
 		$responseFunction = ctr_users::validateCurrentSession();
 		if($responseFunction->result == 2){
@@ -172,6 +184,22 @@ return function (App $app){
 			$message = $data['message'];
 			$phone = $data['phone'];
 			return json_encode(ctr_contracts::sendWhatsAppNotification($phone, $message));
+		}
+		return json_encode($responseFunction);
+	});
+
+	$app->post('/deleteAllAmountContracts', function(Request $request, Response $response) use ($contractController){
+		$responseFunction = ctr_users::validateCurrentSession();
+		if($responseFunction->result == 2){
+			return json_encode($contractController->setCeroAllAmountContracts());
+		}
+		return json_encode($responseFunction);
+	});
+
+	$app->post('/clearUltimoArchivoContracts', function(Request $request, Response $response) use ($contractController){
+		$responseFunction = ctr_users::validateCurrentSession();
+		if($responseFunction->result == 2){
+			return json_encode($contractController->clearUltimoArchivoContracts());
 		}
 		return json_encode($responseFunction);
 	});
