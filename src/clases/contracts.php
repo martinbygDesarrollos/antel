@@ -271,7 +271,7 @@ class contracts{
 	public function getAllContractsToNotify(){
 
 		$lastNotification = handleDateTime::getDateLastNotification();
-		$responseQuery = DataBase::sendQuery("SELECT * FROM `contratos` WHERE (enviarCelular = 1 OR enviarEmail = 1) and importe >= 0 and ( fechaNotificacion IS NULL or fechaNotificacion < ?)", array('s', $lastNotification), "LIST");
+		$responseQuery = DataBase::sendQuery("SELECT * FROM `contratos` WHERE (enviarCelular = 1 OR enviarEmail = 1) and ( fechaNotificacion IS NULL or fechaNotificacion < ?)", array('s', $lastNotification), "LIST");
 		if($responseQuery->result == 1)
 			$responseQuery->message = "No se encontraron contratos.";
 
