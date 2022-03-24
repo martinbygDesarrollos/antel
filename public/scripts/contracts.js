@@ -3,6 +3,8 @@ let textToSearch = null;
 let groupSelected = 0;
 let checkedActive = 0;
 
+/////////////////////////////////////////////////////////
+//obtener datos de contratos
 function getListContracts(){
 	let response = sendPost("getListContracts", {lastId: lastId, textToSearch: textToSearch, group: groupSelected, checkedActive: checkedActive});
 	if(response.result == 2){
@@ -10,6 +12,7 @@ function getListContracts(){
 			lastId = response.lastId;
 		let list = response.listResult;
 		for(let i = 0; i < list.length; i++){
+			//console.log(list[i]);
 			let row = createRow(list[i].id, list[i].grupo, list[i].usuario, list[i].contrato, list[i].importe, list[i].celular, list[i].celularEnvio, list[i].enviarCelular, list[i].email, list[i].enviarEmail, list[i].fechaNotificacion);
 			$('#tbodyContracts').append(row);
 		}
@@ -58,6 +61,8 @@ function createRow(id, group, user, contract, importe, mobilePhone, mobilePhoneT
 	return row;
 }
 
+/////////////////////////////////////////////////////////
+//descargar documento
 function generateExcel(){
 	let response = sendPost("generateExcel", null);
 	if(response.result == 2){
@@ -70,6 +75,8 @@ function generateExcel(){
 	}
 }
 
+/////////////////////////////////////////////////////////
+//eliminar contrato
 function showModalDeleteContract(idContract){
 	$('#modalDeleteContract').modal();
 	$('#buttonConfirmDelete').off('click');
@@ -85,6 +92,8 @@ function deleteContractSelected(idContract){
 		$('#' + idContract).remove();
 }
 
+/////////////////////////////////////////////////////////
+//filtros de busqueda
 function filterGroup(){
 	let selectGroup = $('#selectGroup');
 
@@ -108,8 +117,11 @@ function filterNotificationActive(){
 	getListContracts();
 }
 
+/////////////////////////////////////////////////////////
+//enviar pdf de un contrato
 function showModalSendOneNotificacion(idContract){
 	let response = sendPost('getContractWithID', {idContract: idContract});
+	console.log(response);
 	if(response.result == 2){
 		if(response.contract.enviarEmail == 1 || response.contract.enviarCelular == 1){
 			$('#modalSendNotification').modal('hide');
@@ -140,7 +152,8 @@ function showModalSendOneNotificacion(idContract){
 		}else showReplyMessage(1, "El usuario seleccionado no tiene un medio de notificación activo.", "Notificaciones desactivadas", null);
 	}else showReplyMessage(response.result, response.message, "Contrato no encontrado", null);
 }
-
+/////////////////////////////////////////////////////////
+//enviar pdf de todos los contratos
 function sendNotificaion(){
 	$('#modalSendNotification').modal('hide');
 	$('#modalOnLoad').modal({backdrop: 'static', keyboard: false})
@@ -148,6 +161,7 @@ function sendNotificaion(){
 	$('#textModalOnLoad').html("Se están enviando los contratos...");
 	sendAsyncPost("notifyAllContract", null)
 	.then(function(response){
+		console.log(response);
 		if ( response.result == 2 ){
 			console.log("El proceso de envío de ANTEL, terminó correctamente.");
 			notifyProcessFinished("El proceso de envío de ANTEL, terminó correctamente.");
@@ -168,6 +182,8 @@ function sendNotificaion(){
 	})
 }
 
+/////////////////////////////////////////////////////////
+//subir archivos
 function sendFile(){
 	let file = $('#inputFileToLoad').prop('files');
 	if(file.length != 0){
@@ -204,6 +220,8 @@ function sendFile(){
 	}else showReplyMessage(1, "Debe seleccionar el .zip 'detalle_facturas' o 'facturas_movil'", "Archivo zip requerido", "modalLoadFile");
 }
 
+/////////////////////////////////////////////////////////
+//activar/desactivar notificaciones
 function changeNotificationStatusEmail(idContract){
 	let response = sendPost('changeNotificationStatus', {idContract: idContract, typeNotification: "EMAIL"});
 	if(response.result != 2){
@@ -226,6 +244,8 @@ function changeNotificationStatusMobile(idContract){
 	}
 }
 
+/////////////////////////////////////////////////////////
+//busqueda
 function searchUser(){
 	let textTemp = $('#inputToSearch').val() || null;
 	if(textTemp){
@@ -243,6 +263,8 @@ function searchUser(){
 	getListContracts();
 }
 
+/////////////////////////////////////////////////////////
+//cambiar datos de contratos
 function showModalUpdateContract(idContract){
 	let responseGetContract = sendPost('getContractWithID', {idContract: idContract});
 	if(responseGetContract.result){
@@ -298,6 +320,8 @@ function updateContract(idContract){
 	}
 }
 
+/////////////////////////////////////////////////////////
+//crear contrato nuevo
 function openModalNewContract(){
 	$('#modalContract').modal();
 	$('#modalTitleContract').html("Agregar contrato");
@@ -404,7 +428,8 @@ function cleanUpContract(){
 	$('#inputMobileNotificationContract').val("");
 }
 
-
+/////////////////////////////////////////////////////////
+//enviar documentos
 function getBase64(file) {
 	return new Promise((resolve, reject) => {
 		const reader = new FileReader();
@@ -414,6 +439,8 @@ function getBase64(file) {
 	});
 }
 
+/////////////////////////////////////////////////////////
+//tabs formularios
 function keyEnterPress(eventEnter, value, size){
 	if(eventEnter.keyCode == 13){
 		if(eventEnter.srcElement.id == "inputNameContract")
