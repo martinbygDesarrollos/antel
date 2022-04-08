@@ -215,9 +215,13 @@ class contracts{
 		$body .= $content . $eol;
 		$body .= "--" . $separator . "--";
 
-		//return mail("vanessa@gargano.com.uy", $subject, $body, $headers);
-		if(mail($mailTo, $subject, $body, $headers))
+		if(mail($mailTo, $subject, $body, $headers)){
+			$sessionUserName = $_SESSION['ADMIN']['USER'];
+			$logFile = fopen(LOG_PATHFILE, 'a') or die("Error creando archivo");
+			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " envió correo a ". $mailTo);
+			fclose($logFile);
 			return TRUE;
+		}
 		else
 			return FALSE;
 	}
@@ -229,7 +233,7 @@ class contracts{
 		$subject = 'Contrato N° ' . $contract;
 		$message = 'Antel 0'. $servicio .' '.$usuario.', importe: $'. $amount.', vence: ' .$expiredDate. '. ';
 
-		$header  = 'MIME-Version: 1.0' . "\r\n";
+		$header  = 'MIME-Version: 1.0' . "r\n";
 		$header .= 'Content-type:text/html; charset=UTF-8' . "\r\n";
 		$header .= "From: antel.byg.uy <antel@byg.uy>" . "\r\n";
 
@@ -240,10 +244,13 @@ class contracts{
 		'<body><p>'.$message.'</p></body>' .
 		'</html>';
 
-		//return mail("vanessa@gargano.com.uy", $subject, $body, $header);
-		$result = mail($mailTo, $subject, $body, $header);
-		if($result)
+		if(mail($mailTo, $subject, $body, $header)){
+			$sessionUserName = $_SESSION['ADMIN']['USER'];
+			$logFile = fopen(LOG_PATHFILE, 'a') or die("Error creando archivo");
+			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " envió correo a ". $mailTo);
+			fclose($logFile);
 			return TRUE;
+		}
 		else
 			return FALSE;
 	}
