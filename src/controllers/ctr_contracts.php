@@ -625,7 +625,14 @@ class ctr_contracts{
 			);
 
 			$contextMessage = stream_context_create($opcionesMessage);
-			return file_get_contents($urlMessage, false, $contextMessage);
+			$response = file_get_contents($urlMessage, false, $contextMessage);
+			if ( json_decode($response)->sent == TRUE ){
+				$sessionUserName = $_SESSION['ADMIN']['USER'];
+				$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
+				fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " envió pdf y mensaje por whatsapp a ". $mobilePhone);
+				fclose($logFile);
+			}
+			return $response;
 		}
 	}
 
@@ -646,7 +653,15 @@ class ctr_contracts{
 		);
 
 		$contextMessage = stream_context_create($opcionesMessage);
-		return file_get_contents($urlMessage, false, $contextMessage);
+		$response = file_get_contents($urlMessage, false, $contextMessage);
+		if ( json_decode($response)->sent == TRUE ){
+			$sessionUserName = $_SESSION['ADMIN']['USER'];
+			$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
+			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " envió whatsapp a ". $mobilePhone);
+			fclose($logFile);
+		}
+
+		return $response;
 	}
 
 	function sendWhatsAppNotification($mobilePhone, $message) {

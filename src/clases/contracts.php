@@ -217,7 +217,7 @@ class contracts{
 
 		if(mail($mailTo, $subject, $body, $headers)){
 			$sessionUserName = $_SESSION['ADMIN']['USER'];
-			$logFile = fopen(LOG_PATHFILE, 'a') or die("Error creando archivo");
+			$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
 			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " envió correo a ". $mailTo);
 			fclose($logFile);
 			return TRUE;
@@ -246,7 +246,7 @@ class contracts{
 
 		if(mail($mailTo, $subject, $body, $header)){
 			$sessionUserName = $_SESSION['ADMIN']['USER'];
-			$logFile = fopen(LOG_PATHFILE, 'a') or die("Error creando archivo");
+			$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
 			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " envió correo a ". $mailTo);
 			fclose($logFile);
 			return TRUE;
