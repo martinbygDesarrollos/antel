@@ -1,4 +1,8 @@
-
+*.log
 src/config.php
 public/.htaccess
+public/files
 *.txt
+*.json
+*.lock
+docker-compose-tmp.yml
