@@ -4,6 +4,7 @@ require_once '../src/clases/contracts.php';
 require_once '../src/utils/handle_date_time.php';
 require_once '../src/utils/generate_excel.php';
 
+set_time_limit(60*20);
 class ctr_contracts{
 
 	public function exportExcelContract(){
@@ -389,7 +390,7 @@ class ctr_contracts{
 									if($resultSendEmail){
 										//var_dump("3", $responseGetContract->objectResult->id, $lastNotification, $value);exit;
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
-										sleep(1);
+										//sleep(1);
 									}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
 								}
 							}
@@ -411,7 +412,7 @@ class ctr_contracts{
 									if($responseSent->sent == TRUE){
 										//var_dump("4", $value);exit;
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
-										sleep(5);
+										//sleep(5);
 									}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
 								}
 							}
@@ -454,7 +455,7 @@ class ctr_contracts{
 					if($responseEmail){
 						//var_dump("6", $value);exit;
 						contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, null);
-						sleep(1);
+						//sleep(1);
 					}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
 				}
 			}
@@ -473,7 +474,7 @@ class ctr_contracts{
 					if($responseMovil->sent == TRUE){
 						//var_dump("7", $value);exit;
 						contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, null);
-						sleep(5);
+						//sleep(5);
 					}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
 				}
 			}
