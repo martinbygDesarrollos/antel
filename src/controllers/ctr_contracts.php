@@ -3,8 +3,8 @@
 require_once '../src/clases/contracts.php';
 require_once '../src/utils/handle_date_time.php';
 require_once '../src/utils/generate_excel.php';
+require_once '../src/utils/utils.php';
 
-set_time_limit(60*20);
 class ctr_contracts{
 
 	public function exportExcelContract(){
@@ -585,24 +585,14 @@ class ctr_contracts{
 	}
 
 	function sendWhatsApp($phoneNumber, $userName, $dataFile, $nameFile, $mobilePhone, $amount) {
-		$url = 'https://api.chat-api.com/instance312895/sendFile?token=45ek2wrhgr3rg33m';
-		$json = '{
-			"body": "data:application/pdf;base64,' . $dataFile . '",
-			"filename": "' . $nameFile . '",
-			"phone": 598'. $mobilePhone . '
-		}';
+		$response = new \stdClass();
+		$utils = new utils();
 
-		$opciones = array('http' =>
-			array(
-				'method'  => 'POST',
-				'header'  => 'Content-type: application/json',
-				'content' => $json
-			)
-		);
+		$url = URL_ANTEL.'files/movil/'.$nameFile;
+		$data = "id=".WHATSAPP_API_USER."&to=598".$mobilePhone."&namefile=".$nameFile."&url=".$url;
+		$responseCurl = $utils->whatsappApiConection("message/file", $data);
 
-		$context = stream_context_create($opciones);
-		$result = json_decode(file_get_contents($url, false, $context));
-		if($result->sent == TRUE){
+		if($responseCurl->result == 2 ){
 			//depende del importe que se tenga se agrega en el mensaje o no
 			if ( is_null($amount) )
 				$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. handleDateTime::getFechaVencimiento();
@@ -611,81 +601,83 @@ class ctr_contracts{
 			else
 				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
 
-			$urlMessage = 'https://api.chat-api.com/instance312895/message?token=45ek2wrhgr3rg33m';
-			$jsonMessage = '{
-				"body": "'.$message.'",
-				"phone": 598'. $mobilePhone . '
-			}';
+			$data = "id=".WHATSAPP_API_USER."&content=".$message."&to=598".$mobilePhone;
+			$responseCurl = $utils->whatsappApiConection("message/txt", $data);
+			if ( $responseCurl->result == 2 ){
+				$response->sent = TRUE;
 
-			$opcionesMessage = array('http' =>
-				array(
-					'method'  => 'POST',
-					'header'  => 'Content-type: application/json',
-					'content' => $jsonMessage
-				)
-			);
-
-			$contextMessage = stream_context_create($opcionesMessage);
-			$response = file_get_contents($urlMessage, false, $contextMessage);
-			if ( json_decode($response)->sent == TRUE ){
 				$sessionUserName = $_SESSION['ADMIN']['USER'];
 				$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
 				fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " envió pdf y mensaje por whatsapp a ". $mobilePhone);
 				fclose($logFile);
-			}
-			return $response;
+			}else $response->sent = FALSE;
+
+
+			return json_encode($response);
+		}
+	}
+
+	function getListWAGroups() {
+		$utils = new utils();
+		$data = "id=".WHATSAPP_API_USER;
+		$responseCurl = $utils->whatsappApiConection("client/groups", $data);
+		var_dump($responseCurl);exit;
+
+		if($responseCurl->result == 2 ){
+
+
+			//depende del importe que se tenga se agrega en el mensaje o no
+			if ( is_null($amount) )
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. handleDateTime::getFechaVencimiento();
+			else if ( $amount == 0 )
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount; //.' vence: '. handleDateTime::getFechaVencimiento();
+			else
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
+
+			$data = "id=".WHATSAPP_API_USER."&content=".$message."&to=598".$mobilePhone;
+			$responseCurl = $utils->whatsappApiConection("message/txt", $data);
+			if ( $responseCurl->result == 2 ){
+				$response->sent = TRUE;
+
+				$sessionUserName = $_SESSION['ADMIN']['USER'];
+				$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
+				fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " envió pdf y mensaje por whatsapp a ". $mobilePhone);
+				fclose($logFile);
+			}else $response->sent = FALSE;
 		}
 	}
 
 	function sendWhatsAppWithoutPdf($phoneNumber, $userName, $mobilePhone, $amount) {
+		$response = new \stdClass();
+		$utils = new utils();
 
-		$urlMessage = 'https://api.chat-api.com/instance312895/message?token=45ek2wrhgr3rg33m';
-		$jsonMessage = '{
-			"body": "Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento().'",
-			"phone": 598'. $mobilePhone . '
-		}';
+		$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
+		$data = "id=".WHATSAPP_API_USER."&content=".$message."&to=598".$mobilePhone;
+		$responseCurl = $utils->whatsappApiConection("message/txt", $data);
 
-		$opcionesMessage = array('http' =>
-			array(
-				'method'  => 'POST',
-				'header'  => 'Content-type: application/json',
-				'content' => $jsonMessage
-			)
-		);
-
-		$contextMessage = stream_context_create($opcionesMessage);
-		$response = file_get_contents($urlMessage, false, $contextMessage);
-		if ( json_decode($response)->sent == TRUE ){
+		if ( $responseCurl->result == 2 ){
+			$response->sent = TRUE;
 			$sessionUserName = $_SESSION['ADMIN']['USER'];
 			$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
 			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " envió whatsapp a ". $mobilePhone);
 			fclose($logFile);
-		}
+		}else $response->sent = FALSE;
 
-		return $response;
+		return json_encode($response);
 	}
 
 	function sendWhatsAppNotification($mobilePhone, $message) {
-		$urlMessage = 'https://api.chat-api.com/instance312895/message?token=45ek2wrhgr3rg33m';
-		$jsonMessage = '{
-			"body": "'.$message.'",
-			"phone": 598'.$mobilePhone.'
-		}';
-		$opcionesMessage = array('http' =>
-			array(
-				'method'  => 'POST',
-				'header'  => 'Content-type: application/json',
-				'content' => $jsonMessage
-			)
-		);
+		$response = new \stdClass();
+		$utils = new utils();
 
-		$contextMessage = stream_context_create($opcionesMessage);
-		$result = file_get_contents($urlMessage, false, $contextMessage);
-		if ( isset($result) ){
-			return $result;
+		$data = "id=".WHATSAPP_API_USER."&content=".$message."&to=".$mobilePhone;
+		$responseCurl = $utils->whatsappApiConection("message/txt", $data);
+		if ( $responseCurl->result == 2 ){
+			$response->sent = TRUE;
+			return $response;
 		}else {
-			$result->sent = FALSE;
-			return $result;
+			$response->sent = FALSE;
+			return $response;
 		}
 	}
 

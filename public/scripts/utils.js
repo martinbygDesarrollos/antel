@@ -1,5 +1,6 @@
 //cuando se termina el proceso de envío de emails que notifica al celular phoneNotifications que se terminó el provceso
-var phoneNotifications = "99723666";
+//var phoneNotifications = "99723666";
+var phoneNotifications = "91249709"; //desarrollo
 
 function validateEmail(email) {
 	const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;

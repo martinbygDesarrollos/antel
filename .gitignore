@@ -6,3 +6,4 @@ public/files
 *.json
 *.lock
 docker-compose-tmp.yml
+docker-compose.yml
