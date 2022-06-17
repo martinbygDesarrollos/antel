@@ -589,8 +589,8 @@ class ctr_contracts{
 		$utils = new utils();
 
 		$url = URL_ANTEL.'files/movil/'.$nameFile;
-		$data = "id=".WHATSAPP_API_USER."&to=598".$mobilePhone."&namefile=".$nameFile."&url=".$url;
-		$responseCurl = $utils->whatsappApiConection("message/file", $data);
+		$data = "id=".WHATSAPP_API_USER."&to=598".$mobilePhone."&url=".$url;
+		$responseCurl = $utils->whatsappApiConection("file", $data);
 
 		if($responseCurl->result == 2 ){
 			//depende del importe que se tenga se agrega en el mensaje o no
@@ -602,7 +602,7 @@ class ctr_contracts{
 				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
 
 			$data = "id=".WHATSAPP_API_USER."&content=".$message."&to=598".$mobilePhone;
-			$responseCurl = $utils->whatsappApiConection("message/txt", $data);
+			$responseCurl = $utils->whatsappApiConection("txt", $data);
 			if ( $responseCurl->result == 2 ){
 				$response->sent = TRUE;
 
@@ -620,8 +620,8 @@ class ctr_contracts{
 	function getListWAGroups() {
 		$utils = new utils();
 		$data = "id=".WHATSAPP_API_USER;
-		$responseCurl = $utils->whatsappApiConection("client/groups", $data);
-		var_dump($responseCurl);exit;
+		//$responseCurl = $utils->whatsappApiConection("client/groups", $data);
+		var_dump("En desarrollo");exit;
 
 		if($responseCurl->result == 2 ){
 
@@ -635,7 +635,7 @@ class ctr_contracts{
 				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
 
 			$data = "id=".WHATSAPP_API_USER."&content=".$message."&to=598".$mobilePhone;
-			$responseCurl = $utils->whatsappApiConection("message/txt", $data);
+			$responseCurl = $utils->whatsappApiConection("txt", $data);
 			if ( $responseCurl->result == 2 ){
 				$response->sent = TRUE;
 
@@ -653,7 +653,7 @@ class ctr_contracts{
 
 		$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
 		$data = "id=".WHATSAPP_API_USER."&content=".$message."&to=598".$mobilePhone;
-		$responseCurl = $utils->whatsappApiConection("message/txt", $data);
+		$responseCurl = $utils->whatsappApiConection("txt", $data);
 
 		if ( $responseCurl->result == 2 ){
 			$response->sent = TRUE;
@@ -671,7 +671,7 @@ class ctr_contracts{
 		$utils = new utils();
 
 		$data = "id=".WHATSAPP_API_USER."&content=".$message."&to=".$mobilePhone;
-		$responseCurl = $utils->whatsappApiConection("message/txt", $data);
+		$responseCurl = $utils->whatsappApiConection("txt", $data);
 		if ( $responseCurl->result == 2 ){
 			$response->sent = TRUE;
 			return $response;
