@@ -27,8 +27,16 @@ class utils{
 		));
 
 		$response = curl_exec($curl);
+		$responsejson = json_decode($response);
 
 		curl_close($curl);
-		return json_decode($response);
+
+		if ( isset($responsejson->result) ){
+			return $responsejson;
+		}else{
+			$response = new \stdClass();
+			$response->result = 0;
+			return json_decode($response);
+		}
 	}
 }

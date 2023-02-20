@@ -588,33 +588,52 @@ class ctr_contracts{
 		$response = new \stdClass();
 		$utils = new utils();
 
+		$sessionUserName = $_SESSION['ADMIN']['USER'];
+
 		$url = URL_ANTEL.'files/movil/'.$nameFile;
 		$data = "id=".WHATSAPP_API_USER."&to=598".$mobilePhone."&url=".$url;
 		$responseCurl = $utils->whatsappApiConection("file", $data);
 
-		if($responseCurl->result == 2 ){
-			//depende del importe que se tenga se agrega en el mensaje o no
-			if ( is_null($amount) )
-				$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. handleDateTime::getFechaVencimiento();
-			else if ( $amount == 0 )
-				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount; //.' vence: '. handleDateTime::getFechaVencimiento();
-			else
-				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
+		//depende del importe que se tenga se agrega en el mensaje o no
+		if ( is_null($amount) )
+			$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. handleDateTime::getFechaVencimiento();
+		else if ( $amount == 0 )
+			$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount; //.' vence: '. handleDateTime::getFechaVencimiento();
+		else
+			$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
 
-			$data = "id=".WHATSAPP_API_USER."&content=".$message."&to=598".$mobilePhone;
-			$responseCurl = $utils->whatsappApiConection("txt", $data);
-			if ( $responseCurl->result == 2 ){
-				$response->sent = TRUE;
+		$datatexto = "id=".WHATSAPP_API_USER."&content=".$message."&to=598".$mobilePhone;
+		$responseCurlTexto = $utils->whatsappApiConection("txt", $datatexto);
 
-				$sessionUserName = $_SESSION['ADMIN']['USER'];
-				$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
-				fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " envió pdf y mensaje por whatsapp a ". $mobilePhone);
-				fclose($logFile);
-			}else $response->sent = FALSE;
+		//-----------------------------------------------------------------------
 
+		if($responseCurl->result == 2 && $responseCurlTexto->result == 2){
+			$response->sent = TRUE;
+
+			$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
+			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " se envió pdf y se envió texto a ". $mobilePhone);
+			fclose($logFile);
+
+			return json_encode($response);
+		}else if($responseCurl->result != 2 && $responseCurlTexto->result != 2){
+			$response->sent = FALSE;
+
+			$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
+			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " No se envió pdf, NO se envió texto a ". $mobilePhone);
+			fclose($logFile);
+
+			return json_encode($response);
+		}else{
+			$response->sent = TRUE;
+
+			$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
+			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. "  envió pdf o texto a ". $mobilePhone);
+			fclose($logFile);
 
 			return json_encode($response);
 		}
+
+
 	}
 
 	function getListWAGroups() {
