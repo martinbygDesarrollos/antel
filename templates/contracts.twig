@@ -54,7 +54,7 @@
 							<th class="text-right text-white" scope="col">Usuario</th>
 							<th class="text-center text-white" scope="col">Grupo</th>
 							<th class="text-right text-white" scope="col">Celular</th>
-							<th class="text-right text-white" scope="col">Celular envio</th>
+							<th class="text-right text-white" scope="col">Celular envío</th>
 							<th class="text-center text-white" style="width: 6em;" scope="col">Notificar</th>
 							<th class="text-right text-white" scope="col">Correo</th>
 							<th class="text-center text-white" style="width: 6em;" scope="col">Notificar</th>
@@ -235,7 +235,7 @@
 <script type="text/javascript">
 	getListContracts();
 	$('#containerTable').on('scroll', function() {
-		if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
+		if($(this).scrollTop() + $(this).innerHeight() >= ($(this)[0].scrollHeight) - 10) {
 			getListContracts();
 		}
 	});
