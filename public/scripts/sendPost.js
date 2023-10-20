@@ -11,8 +11,9 @@ function sendPost(nombreFuncion, parametros){
 
 			result =  response;
 		},
-		error: function (response) {
-			result = "error"
+		error: function (jqXHR, textStatus, errorThrown) {
+			var response = {result:0, message:errorThrown}
+			result =  response;
 		},
 	});
 	return result;
@@ -32,8 +33,9 @@ function sendAsyncPost(nombreFuncion, parametros){
 
 				resolve(response);
 			},
-			error: function (response) {
-				result = "error"
+			error: function (jqXHR, textStatus, errorThrown) {
+				var response = {result:0, message:errorThrown}
+				resolve(response);
 			},
 		});
 	});
