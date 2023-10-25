@@ -77,4 +77,32 @@ class utils{
 			return $response;
 		}
 	}
+
+
+
+	public function whatsapp($path, $data){
+
+		$ch = curl_init();
+		curl_setopt( $ch, CURLOPT_URL, URL_WHATSAPP_API.$path );
+		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+		curl_setopt( $ch, CURLOPT_POST, 1);
+		curl_setopt( $ch, CURLOPT_TIMEOUT_MS, 14950);
+		curl_setopt( $ch, CURLOPT_POSTFIELDS, $data);
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+		$response = curl_exec( $ch );
+		$responsejson = json_decode($response);
+
+		curl_close($ch);
+
+		if ( isset($responsejson->result) ){
+			return $responsejson;
+		}else{
+			$response = new \stdClass();
+			$response->result = 0;
+			return $response;
+		}
+
+	}
+
 }

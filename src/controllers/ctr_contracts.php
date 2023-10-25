@@ -590,9 +590,23 @@ class ctr_contracts{
 
 		$sessionUserName = $_SESSION['ADMIN']['USER'];
 
-		$pdf = base64_encode(utf8_decode($dataFile));
-		$data = "id=".WHATSAPP_API_USER."&to=598".$mobilePhone."&content=".$pdf.'&mimetype=application/pdf&name='.$nameFile;
-		$responseCurl = $utils->whatsappApiConectionPost("img", $data);
+		//$data = "id=".WHATSAPP_API_USER."&to=598".$mobilePhone."&content=".$pdf.'&mimetype=application/pdf&name='.$nameFile;
+
+		$route = 'img';
+		$data = http_build_query(
+		    array(
+		        'id'       => WHATSAPP_API_USER,
+		        'content'  => trim($dataFile),
+		        'to'       => trim($mobilePhone),
+		        'name'     => trim($nameFile),
+		        'mimetype' => 'application/pdf',
+		        'token'    => '45ek2wrhgr3rg33m'
+		    )
+		);
+
+
+		$responseCurl = $utils->whatsapp($route, $data);
+
 		//depende del importe que se tenga se agrega en el mensaje o no
 		if ( is_null($amount) )
 			$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. handleDateTime::getFechaVencimiento();
