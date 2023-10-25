@@ -287,7 +287,7 @@ class ctr_contracts{
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
 									}else{
 										$response->result = 0;
-										$response->message = "Ocurrió un error y pudo notificar al usuario a traves de WhatsApp.";
+										$response->message = "Ocurrió un error al notificar a través de WhatsApp.";
 										return $response;
 									}
 								}
@@ -305,7 +305,7 @@ class ctr_contracts{
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
 									}else{
 										$response->result = 0;
-										$response->message = "Ocurrió un error y pudo notificar al usuario a traves del correo.";
+										$response->message = "Ocurrió un error al notificar a través del correo.";
 										return $response;
 									}
 								}
@@ -590,10 +590,9 @@ class ctr_contracts{
 
 		$sessionUserName = $_SESSION['ADMIN']['USER'];
 
-		$url = URL_ANTEL.'files/movil/'.$nameFile;
-		$data = "id=".WHATSAPP_API_USER."&to=598".$mobilePhone."&url=".$url;
-		$responseCurl = $utils->whatsappApiConection("file", $data);
-
+		$pdf = base64_encode(utf8_decode($dataFile));
+		$data = "id=".WHATSAPP_API_USER."&to=598".$mobilePhone."&content=".$pdf.'&mimetype=application/pdf&name='.$nameFile;
+		$responseCurl = $utils->whatsappApiConectionPost("img", $data);
 		//depende del importe que se tenga se agrega en el mensaje o no
 		if ( is_null($amount) )
 			$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. handleDateTime::getFechaVencimiento();
