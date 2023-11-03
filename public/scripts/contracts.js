@@ -13,7 +13,7 @@ function getListContracts(){
 		let list = response.listResult;
 		for(let i = 0; i < list.length; i++){
 			//console.log(list[i]);
-			let row = createRow(list[i].id, list[i].grupo, list[i].usuario, list[i].contrato, list[i].importe, list[i].celular, list[i].celularEnvio, list[i].enviarCelular, list[i].email, list[i].enviarEmail, list[i].fechaNotificacion);
+			let row = createRow(list[i].id, list[i].grupo, list[i].usuario, list[i].contrato, list[i].importe, list[i].celular, list[i].celularEnvio, list[i].enviarCelular, list[i].email, list[i].enviarEmail, list[i].fechaNotificacion, list[i].ultimoArchivo);
 			$('#tbodyContracts').append(row);
 		}
 	}else if(response.result == 0){
@@ -21,7 +21,8 @@ function getListContracts(){
 	}
 }
 
-function createRow(id, group, user, contract, importe, mobilePhone, mobilePhoneToSend, activeMobile, email, activeEmail, dateNotification){
+function createRow(id, group, user, contract, importe, mobilePhone, mobilePhoneToSend, activeMobile, email, activeEmail, dateNotification, ultimoArchivo){
+
 	let row = "<tr id='" + id + "' >";
 	row += "<td class='text-right'>" + contract + "</td>";
 	row += "<td class='text-right'>" + importe + "</td>";
@@ -42,6 +43,12 @@ function createRow(id, group, user, contract, importe, mobilePhone, mobilePhoneT
 
 	row += "<td class='text-center'><label class='switch'><input type='checkbox' id='email" + id + "' onchange='changeNotificationStatusEmail(" + id + ")' " + isCheckedE +"><span class='slider round'></span></label></td>";
 	row += "<td class='text-right'>" + dateNotification + "</td>";
+
+	//boton para descargar pdf
+	if (ultimoArchivo)
+		row += "<td class='text-right'><button class='btn btn-link' onclick='downloadFile(`"+ultimoArchivo+"`)'><i class='fas fa-download'></i></button></td>";
+	else
+		row += "<td class='text-right'><button class='btn btn-link' title='No hay archivo cargado' disabled><i class='fas fa-download'></i></button></td>";
 
 	let titleToolTip = "Enviar factura.";
 	if(user != "No especificado.")
@@ -311,7 +318,7 @@ function updateContract(idContract){
 			showReplyMessage(responseUpdate.result, responseUpdate.message, "Modificar contrato", "modalContract");
 			if(responseUpdate.result == 2){
 				let updated = responseUpdate.contract;
-				let row = createRow(updated.id, updated.grupo, updated.usuario, updated.contrato, updated.importe, updated.celular, updated.celularEnvio, updated.enviarCelular, updated.email, updated.enviarEmail, updated.fechaNotificacion);
+				let row = createRow(updated.id, updated.grupo, updated.usuario, updated.contrato, updated.importe, updated.celular, updated.celularEnvio, updated.enviarCelular, updated.email, updated.enviarEmail, updated.fechaNotificacion, updated.ultimoArchivo);
 				$('#' + idContract).replaceWith(row);
 			}
 		}else showReplyMessage(responseDontRepeatContract.result, responseDontRepeatContract.message, "Modificar contrato", "modalContract");
@@ -361,7 +368,7 @@ function createNewContract(){
 			showReplyMessage(responseCreateContract.result, responseCreateContract.message, "Crear contrato", "modalContract");
 			if(responseCreateContract.result == 2){
 				let created = responseCreateContract.contract;
-				let row = createRow(created.id, created.grupo, created.usuario, created.contrato, created.importe, created.celular, created.celularEnvio, created.enviarCelular, created.email, created.enviarEmail, created.fechaNotificacion);
+				let row = createRow(created.id, created.grupo, created.usuario, created.contrato, created.importe, created.celular, created.celularEnvio, created.enviarCelular, created.email, created.enviarEmail, created.fechaNotificacion, created.ultimoArchivo);
 				$('#tbodyContracts').prepend(row);
 				cleanUpContract();
 			}
@@ -460,3 +467,9 @@ function keyEnterPress(eventEnter, value, size){
 	}
 }
 
+function downloadFile( path ){
+
+	let nameFile = path.substring(0, path.length -4)
+	window.location.href = getSiteURL() + 'downloadFile.php?n='+nameFile;
+
+}
