@@ -19,6 +19,7 @@ return function (App $app) {
         if(isset($_SESSION['ADMIN'])){
             $responseFunction = ctr_users::validateCurrentSession();
             if($responseFunction->result == 2){
+                $args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
                 $args['session'] = $_SESSION['ADMIN'];
                 $args['groupsInfo'] = ctr_contracts::getGroupsInformation();
                 //return $this->view->render($response, "index.twig", $args);

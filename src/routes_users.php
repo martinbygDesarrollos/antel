@@ -10,6 +10,7 @@ return function (App $app){
 	$container = $app->getContainer();
 
 	$app->get('/iniciar-sesion', function ($request, $response, $args) use ($container) {
+		$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
 		return $this->view->render($response, "login.twig", $args);
 	})->setName("Login");
 

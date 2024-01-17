@@ -121,7 +121,7 @@ class ctr_contracts{
 
 		if(file_exists($folderPath . "Facturas_Movil.zip") === TRUE){
 			// se tendría que borrar la carpeta de pdf
-			ctr_contracts::clearFolderPath(["public", "files", "movil"]);
+			// ctr_contracts::clearFolderPath(["public", "files", "movil"]);
 
 			$zipMovil = new ZipArchive();
 			$descompressFile = $zipMovil->open($folderPath . "Facturas_Movil.zip");
@@ -136,13 +136,13 @@ class ctr_contracts{
 		}else{
 			//xml
 			//se tendría que borrar la carpeta de contratos
-			ctr_contracts::clearFolderPath(["public", "files", "contratos"]);
+			// ctr_contracts::clearFolderPath(["public", "files", "contratos"]);
 
 			//como se sube zip xml se ponen en null los importes anteriores
-			$resultSetAmountContracts = ctr_contracts::setCeroAllAmountContracts();
-			if( $resultSetAmountContracts->result != 2){
-				return $resultSetAmountContracts;
-			}
+			// $resultSetAmountContracts = ctr_contracts::setCeroAllAmountContracts();
+			// if( $resultSetAmountContracts->result != 2){
+			// 	return $resultSetAmountContracts;
+			// }
 
 			$zip = new ZipArchive;
 			$descompressFile = $zip->open($file);
@@ -230,7 +230,7 @@ class ctr_contracts{
 			}
 		}
 
-		ctr_contracts::clearDirContract($folderPath);
+		// ctr_contracts::clearDirContract($folderPath);
 
 		return $response;
 	}
@@ -360,7 +360,7 @@ class ctr_contracts{
 		return $response;
 	}
 
-	public function notifyAllContract(){
+	public function notifyAllContract($vencimiento){
 		$response = new \stdClass();
 
 		$folderPath = dirname(dirname(__DIR__)) . "/public/files/movil";
@@ -408,7 +408,7 @@ class ctr_contracts{
 									$phoneNumber = $responseGetContract->objectResult->celular;
 									$userName = $responseGetContract->objectResult->usuario;
 									$amount = $responseGetContract->objectResult->importe;
-									$responseSent = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber, $amount));
+									$responseSent = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber, $amount, $vencimiento));
 									if($responseSent->sent == TRUE){
 										//var_dump("4", $value);exit;
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
@@ -584,7 +584,7 @@ class ctr_contracts{
 	    return rmdir($dir);
 	}
 
-	function sendWhatsApp($phoneNumber, $userName, $dataFile, $nameFile, $mobilePhone, $amount) {
+	function sendWhatsApp($phoneNumber, $userName, $dataFile, $nameFile, $mobilePhone, $amount, $vencimiento = null) {
 		$response = new \stdClass();
 		$utils = new utils();
 
@@ -608,13 +608,19 @@ class ctr_contracts{
 		$responseCurl = $utils->whatsapp($route, $data);
 
 		//depende del importe que se tenga se agrega en el mensaje o no
-		if ( is_null($amount) )
-			$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. handleDateTime::getFechaVencimiento();
-		else if ( $amount == 0 )
+		if ( is_null($amount) ) {
+			if(!is_null($vencimiento))
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. handleDateTime::getFechaVencimiento();
+			else
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. substr($vencimiento, 8, 2) . substr($vencimiento, 5, 2) . substr($vencimiento, 0, 4);
+		} else if ( $amount == 0 ) {
 			$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount; //.' vence: '. handleDateTime::getFechaVencimiento();
-		else
-			$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
-
+		} else {
+			if(!is_null($vencimiento))
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
+			else
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. substr($vencimiento, 8, 2) . substr($vencimiento, 5, 2) . substr($vencimiento, 0, 4);
+		}
 		$datatexto = "id=".WHATSAPP_API_USER."&content=".$message."&to=598".$mobilePhone;
 		$responseCurlTexto = $utils->whatsappApiConection("txt", $datatexto);
 

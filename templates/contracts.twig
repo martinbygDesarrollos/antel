@@ -102,6 +102,10 @@
 			</div>
 			<div class="modal-body">
 				<p class="text-center">¿Desea enviar todos los contratos?</p>
+				<div>
+					<label style="display: inline-block;" class="form-check-label" for="inputDate"> Vencimiento </label>
+					<input style="display: inline-block; width: calc(100% - 100px) !important;" id="inputDate" type="date" class="form-control shadow" onchange="" onkeyup="" placeholder="">
+				</div>
 			</div>
 			<div class="modal-footer d-flex justify-content-between">
 				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
@@ -228,11 +232,11 @@
 	</div>
 </div>
 {%block script%}
-<script type="text/javascript" src="{{ path_for('Start') }}scripts/contracts.js"></script>
-<script type="text/javascript" src="{{ path_for('Start') }}scripts/menuContracts.js"></script>
-<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils.js"></script>
-<script type="text/javascript" src="{{ path_for('Start') }}scripts/sendPost.js"></script>
-<script type="text/javascript" src="{{ path_for('Start') }}scripts/showReplyMessage.js"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/contracts.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/menuContracts.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/sendPost.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start') }}scripts/showReplyMessage.js{{ versionerp }}"></script>
 <script type="text/javascript">
 	getListContracts();
 	$('#containerTable').on('scroll', function() {

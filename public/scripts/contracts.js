@@ -126,6 +126,15 @@ function filterNotificationActive(){
 
 /////////////////////////////////////////////////////////
 //enviar pdf de un contrato
+
+$('#modalSendNotification').on('shown.bs.modal', function() {
+	document.getElementById("inputDate").valueAsDate = new Date();
+	// let day = ( $('#inputDate').val() ).slice(-2);
+	let month = ( $('#inputDate').val() ).slice(-5, -3);
+	let year = ( $('#inputDate').val() ).slice(0, 4);
+	$('#inputDate').val(year + "-" + month + "-" + "23");
+})
+
 function showModalSendOneNotificacion(idContract){
 	let response = sendPost('getContractWithID', {idContract: idContract});
 	console.log(response);
@@ -166,7 +175,8 @@ function sendNotificaion(){
 	$('#modalOnLoad').modal({backdrop: 'static', keyboard: false})
 	$('#modalOnLoad').modal();
 	$('#textModalOnLoad').html("Se están enviando los contratos...");
-	sendAsyncPost("notifyAllContract", null)
+	vencimiento = $('#inputDate').val();
+	sendAsyncPost("notifyAllContract", {vencimiento: vencimiento})
 	.then(function(response){
 		console.log(response);
 		if ( response.result == 2 ){

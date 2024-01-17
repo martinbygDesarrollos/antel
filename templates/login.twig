@@ -27,9 +27,9 @@
 	</div>
 </div>
 {%block script%}
-<script type="text/javascript" src="{{ path_for('Start')}}scripts/login.js"></script>
-<script type="text/javascript" src="{{ path_for('Start')}}scripts/showReplyMessage.js"></script>
-<script type="text/javascript" src="{{ path_for('Start')}}scripts/sendPost.js"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/login.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/showReplyMessage.js{{ versionerp }}"></script>
+<script type="text/javascript" src="{{ path_for('Start')}}scripts/sendPost.js{{ versionerp }}"></script>
 <script type="text/javascript">
 	$('#inputNickName').focus();
 </script>

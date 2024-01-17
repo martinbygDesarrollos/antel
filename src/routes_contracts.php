@@ -16,6 +16,7 @@ return function (App $app){
 	$app->get('/ver-contratos', function($request, $response, $args) use ($container){
 		$responseFunction = ctr_users::validateCurrentSession();
 		if($responseFunction->result == 2){
+			$args['versionerp'] = '?'.FECHA_ULTIMO_PUSH;
 			$args['session'] = $_SESSION['ADMIN'];
 			$args['responseGroups'] = ctr_contracts::getGroupsInformation();
 			return $this->view->render($response, "contracts.twig", $args);
@@ -133,7 +134,11 @@ return function (App $app){
 	$app->post('/notifyAllContract', function(Request $request, Response $response){
 		$responseFunction = ctr_users::validateCurrentSession();
 		if($responseFunction->result == 2){
-			$responseFunction = ctr_contracts::notifyAllContract();
+			$data = $request->getParams();
+			$vencimiento = $data['vencimiento'];
+			// var_dump($vencimiento);
+			// exit;
+			$responseFunction = ctr_contracts::notifyAllContract($vencimiento);
 		}
 		return json_encode($responseFunction);
 	});

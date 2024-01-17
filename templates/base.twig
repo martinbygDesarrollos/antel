@@ -12,8 +12,8 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" integrity="sha512-XKa9Hemdy1Ui3KSGgJdgMyYlUg1gM+QhL6cnlyTe2qzMCYm4nAZ1PsVerQzTTXzonUR+dmswHqgJPuwCq1MaAg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
-	<link rel="stylesheet" type="text/css" href="{{ path_for('Start')}}styles/globalStyles.css">
-	<link rel="stylesheet" type="text/css" href="{{ path_for('Start')}}styles/toggle.css">
+	<link rel="stylesheet" type="text/css" href="{{ path_for('Start')}}styles/globalStyles.css{{ versionerp }}">
+	<link rel="stylesheet" type="text/css" href="{{ path_for('Start')}}styles/toggle.css{{ versionerp }}">
 	<title>{% block title %}Antel{% endblock %}</title>
 </head>
 <body class="d-flex flex-column" style="background-color: #EEEFF1;">
@@ -48,8 +48,8 @@
 			</div>
 		</div>
 	</div>
-	<script type="text/javascript" src="{{ path_for('Start') }}scripts/showReplyMessage.js"></script>
-	<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils.js"></script>
-	<script type="text/javascript" src="{{ path_for('Start') }}scripts/sendPost.js"></script>
+	<script type="text/javascript" src="{{ path_for('Start') }}scripts/showReplyMessage.js{{ versionerp }}"></script>
+	<script type="text/javascript" src="{{ path_for('Start') }}scripts/utils.js{{ versionerp }}"></script>
+	<script type="text/javascript" src="{{ path_for('Start') }}scripts/sendPost.js{{ versionerp }}"></script>
 </body>
 </html>
