@@ -7,8 +7,8 @@ if (PHP_SAPI == 'cli-server') {
 	}
 }
 
-if (file_exists('/home/byguyqrd/utils/vendor/autoload.php') ){
-	require '/home/byguyqrd/utils/vendor/autoload.php';
+if (file_exists('/homeX/byguyqrd/utils/vendor/autoload.php') ){
+	require '/homeX/byguyqrd/utils/vendor/autoload.php';
 }else{
 	require 'C:/xampp/htdocs/utils/vendor/autoload.php';
 }
