@@ -115,6 +115,30 @@
 	</div>
 </div>
 
+<div class="modal fade" id="modalSendSingleNotification" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-contrato="" data-cliente="">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-primary">
+				<span class="modal-title text-white">Enviar contrato</span>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p class="text-center">¿Desea enviar el contrato?</p>
+				<div>
+					<label style="display: inline-block;" class="form-check-label" for="inputDateSingleNotification"> Vencimiento </label>
+					<input style="display: inline-block; width: calc(100% - 100px) !important;" id="inputDateSingleNotification" type="date" class="form-control shadow" onchange="" onkeyup="" placeholder="">
+				</div>
+			</div>
+			<div class="modal-footer d-flex justify-content-between">
+				<button type="button" class="btn btn-danger shadow-sm" data-dismiss="modal">Cancelar</button>
+				<button type="button" class="btn btn-success shadow-sm" onclick="sendNotification()">Confirmar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <div class="modal fade" id="modalOnLoad" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered" role="document">
 		<div class="modal-content">

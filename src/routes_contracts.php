@@ -148,7 +148,8 @@ return function (App $app){
 		if($responseFunction->result == 2){
 			$data = $request->getParams();
 			$idContract = $data['idContract'];
-			$responseFunction = ctr_contracts::notifyOneContract($idContract);
+			$vencimiento = $data['vencimiento'];
+			$responseFunction = ctr_contracts::notifyOneContract($idContract, $vencimiento);
 		}
 		return json_encode($responseFunction);
 	});

@@ -135,38 +135,57 @@ $('#modalSendNotification').on('shown.bs.modal', function() {
 	$('#inputDate').val(year + "-" + month + "-" + "23");
 })
 
+$('#modalSendSingleNotification').on('shown.bs.modal', function() {
+	document.getElementById("inputDateSingleNotification").valueAsDate = new Date();
+	// let day = ( $('#inputDate').val() ).slice(-2);
+	let month = ( $('#inputDateSingleNotification').val() ).slice(-5, -3);
+	let year = ( $('#inputDateSingleNotification').val() ).slice(0, 4);
+	$('#inputDateSingleNotification').val(year + "-" + month + "-" + "23");
+})
+
 function showModalSendOneNotificacion(idContract){
 	let response = sendPost('getContractWithID', {idContract: idContract});
 	console.log(response);
 	if(response.result == 2){
 		if(response.contract.enviarEmail == 1 || response.contract.enviarCelular == 1){
 			$('#modalSendNotification').modal('hide');
-			$('#modalOnLoad').modal({backdrop: 'static', keyboard: false})
-			$('#modalOnLoad').modal();
-			$('#textModalOnLoad').html("Se esta enviando el contrato al cliente " + response.contract.usuario + "...");
 
-			sendAsyncPost('notifyOneContract', {idContract: idContract})
-			.then(function(response){
-				$('#modalOnLoad').modal('hide');
-				showReplyMessage(response.result, response.message, "Enviar notificación", null);
-				if ( response.result == 2 ){
-					console.log("El proceso de envío de ANTEL, terminó correctamente.");
-					notifyProcessFinished("El proceso de envío de ANTEL, terminó correctamente.");
-				}else{
-					console.log("El proceso de envío de ANTEL, terminó con error.");
-					console.log(response);
-					notifyProcessFinished("El proceso de envío de ANTEL, terminó con error. "+response.message);
-				}
-			})
-			.catch(function(response){
-				console.log("El proceso de envío de ANTEL, terminó con error.");
-				console.log(response);
-				notifyProcessFinished("El proceso de envío de ANTEL, terminó con error. "+response.message);
-				$('#modalOnLoad').modal('hide');
-				showReplyMessage(response.result, response.message, "Enviar notificación", null);
-			})
+			$("#modalSendSingleNotification").data("contrato", idContract);
+			$("#modalSendSingleNotification").data("cliente", response.contract.usuario );
+			$('#modalSendSingleNotification').modal();
+
 		}else showReplyMessage(1, "El usuario seleccionado no tiene un medio de notificación activo.", "Notificaciones desactivadas", null);
 	}else showReplyMessage(response.result, response.message, "Contrato no encontrado", null);
+}
+
+function sendNotification(){
+	$('#modalSendSingleNotification').modal('hide');
+	$('#modalOnLoad').modal({backdrop: 'static', keyboard: false})
+	$('#modalOnLoad').modal();
+	$('#textModalOnLoad').html("Se esta enviando el contrato al cliente " + $("#modalSendSingleNotification").data("cliente") + "...");
+	idContract = $("#modalSendSingleNotification").data("contrato");
+	vencimiento = $('#inputDateSingleNotification').val();
+	sendAsyncPost('notifyOneContract', {idContract: idContract, vencimiento: vencimiento})
+	.then(function(response){
+		$('#modalOnLoad').modal('hide');
+		showReplyMessage(response.result, response.message, "Enviar notificación", null);
+		if ( response.result == 2 ){
+			console.log("El proceso de envío de ANTEL, terminó correctamente.");
+			notifyProcessFinished("El proceso de envío de ANTEL, terminó correctamente.");
+		}else{
+			console.log("El proceso de envío de ANTEL, terminó con error.");
+			console.log(response);
+			notifyProcessFinished("El proceso de envío de ANTEL, terminó con error. "+response.message);
+		}
+	})
+	.catch(function(response){
+		console.log("El proceso de envío de ANTEL, terminó con error.");
+		console.log(response);
+		notifyProcessFinished("El proceso de envío de ANTEL, terminó con error. "+response.message);
+		$('#modalOnLoad').modal('hide');
+		showReplyMessage(response.result, response.message, "Enviar notificación", null);
+	})
+
 }
 /////////////////////////////////////////////////////////
 //enviar pdf de todos los contratos

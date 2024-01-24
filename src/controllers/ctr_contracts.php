@@ -252,10 +252,11 @@ class ctr_contracts{
 		}
 	}
 
-	public function notifyOneContract($idContract){
+	public function notifyOneContract($idContract, $vencimiento){
 		$response = new \stdClass();
+		$notificado = false;
 
-		$folderPath = dirname(dirname(__DIR__)) . "/public/files/movil/";
+		$folderPath = dirname(dirname(__DIR__)). DIRECTORY_SEPARATOR . "public" . DIRECTORY_SEPARATOR . "files" . DIRECTORY_SEPARATOR . "movil";
 		if(file_exists($folderPath)){
 			$listDir = array_diff(scandir($folderPath), array('..', '.'));
 			if(sizeof($listDir) > 0){
@@ -263,6 +264,7 @@ class ctr_contracts{
 				$lastNotification = handleDateTime::getDateLastNotification();
 				$responseGetContract = contracts::getContractWithID($idContract);
 				if($responseGetContract->result == 2){
+					$folderPath .= DIRECTORY_SEPARATOR;
 					foreach($listDir as $key => $value){
 						$arrayName = explode("_", $value);
 						$numberContract = explode("." ,$arrayName[sizeof($arrayName) - 1])[0];
@@ -281,10 +283,12 @@ class ctr_contracts{
 									$phoneNumber = $responseGetContract->objectResult->celular;
 									$userName = $responseGetContract->objectResult->usuario;
 									$amount = $responseGetContract->objectResult->importe;
-									$responseMovil = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber, $amount));
+									// echo $folderPath . $value;
+									$responseMovil = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber, $amount, $vencimiento));
 									if($responseMovil->sent == TRUE){
 										//var_dump("1",$value);exit;
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
+										$notificado = true;
 									}else{
 										$response->result = 0;
 										$response->message = "Ocurrió un error al notificar a través de WhatsApp.";
@@ -303,6 +307,7 @@ class ctr_contracts{
 									if($responseEmail){
 										//var_dump("2", $value);exit;
 										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
+										$notificado = true;
 									}else{
 										$response->result = 0;
 										$response->message = "Ocurrió un error al notificar a través del correo.";
@@ -354,23 +359,25 @@ class ctr_contracts{
 				$response->message = "No se encontraron los archivos del zip cargado.";
 			}
 		}else{
-			$response = ctr_contracts::notifyOneContractWithoutPdf($idContract);
+			$response = ctr_contracts::notifyOneContractWithoutPdf($idContract, $vencimiento);
 		}
-
+		if(!$notificado) // Al final de todo pregunto si se notifico el usuario y si no, itento notificarlo pero sin PDF
+			$response = ctr_contracts::notifyOneContractWithoutPdf($idContract, $vencimiento);
 		return $response;
 	}
 
 	public function notifyAllContract($vencimiento){
 		$response = new \stdClass();
 
-		$folderPath = dirname(dirname(__DIR__)) . "/public/files/movil";
+		$folderPath = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . "public" . DIRECTORY_SEPARATOR . "files" . DIRECTORY_SEPARATOR . "movil";
 		if(file_exists($folderPath)){
 
 			$listDir = array_diff(scandir($folderPath), array('..', '.'));
 			if(sizeof($listDir) > 0){
-				//var_dump("tengo pdfs");
+				// var_dump("tengo pdfs");
 				$lastNotification = handleDateTime::getDateLastNotification();
 				$arrayErrors = array();
+				$folderPath .= DIRECTORY_SEPARATOR;
 				foreach ($listDir as $key => $value) {
 
 					$arrayName = explode("_", $value);
@@ -378,42 +385,43 @@ class ctr_contracts{
 					$responseGetContract = contracts::getContractWithNumber($numberContract);
 					if($responseGetContract->result == 2){
 
-						$folderPath .= '/';
 						if(is_null($responseGetContract->objectResult->ultimoArchivo) || strcmp($responseGetContract->objectResult->ultimoArchivo, $value) != 0){
-							if($responseGetContract->objectResult->enviarEmail == 1){
-								if(!is_null($responseGetContract->objectResult->email)){
-									$phoneNumber = $responseGetContract->objectResult->celular;
-									$userName = $responseGetContract->objectResult->usuario;
-									$amount = $responseGetContract->objectResult->importe;
-									//var_dump($responseGetContract);exit;
-									$resultSendEmail = contracts::sendMail($phoneNumber, $userName, $folderPath, $value, $numberContract, $responseGetContract->objectResult->email, $amount);
-									if($resultSendEmail){
-										//var_dump("3", $responseGetContract->objectResult->id, $lastNotification, $value);exit;
-										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
-										//sleep(1);
-									}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
+							if(is_null($responseGetContract->objectResult->fechaNotificacion) || strcmp($responseGetContract->objectResult->fechaNotificacion, $lastNotification) != 0){
+								if($responseGetContract->objectResult->enviarEmail == 1){
+									if(!is_null($responseGetContract->objectResult->email)){
+										$phoneNumber = $responseGetContract->objectResult->celular;
+										$userName = $responseGetContract->objectResult->usuario;
+										$amount = $responseGetContract->objectResult->importe;
+										//var_dump($responseGetContract);exit;
+										$resultSendEmail = contracts::sendMail($phoneNumber, $userName, $folderPath, $value, $numberContract, $responseGetContract->objectResult->email, $amount);
+										if($resultSendEmail){
+											//var_dump("3", $responseGetContract->objectResult->id, $lastNotification, $value);exit;
+											contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
+											//sleep(1);
+										}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
+									}
 								}
-							}
 
-							if($responseGetContract->objectResult->enviarCelular == 1){
-								//var_dump("acá 3 celu");
+								if($responseGetContract->objectResult->enviarCelular == 1){
+									//var_dump("acá 3 celu");
 
-								$tempMobileNumber = null;
-								if(!is_null($responseGetContract->objectResult->celularEnvio))
-									$tempMobileNumber = $responseGetContract->objectResult->celularEnvio;
-								else if(!is_null($responseGetContract->objectResult->celular))
-									$tempMobileNumber = $responseGetContract->objectResult->celular;
+									$tempMobileNumber = null;
+									if(!is_null($responseGetContract->objectResult->celularEnvio))
+										$tempMobileNumber = $responseGetContract->objectResult->celularEnvio;
+									else if(!is_null($responseGetContract->objectResult->celular))
+										$tempMobileNumber = $responseGetContract->objectResult->celular;
 
-								if(!is_null($tempMobileNumber)){
-									$phoneNumber = $responseGetContract->objectResult->celular;
-									$userName = $responseGetContract->objectResult->usuario;
-									$amount = $responseGetContract->objectResult->importe;
-									$responseSent = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber, $amount, $vencimiento));
-									if($responseSent->sent == TRUE){
-										//var_dump("4", $value);exit;
-										contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
-										//sleep(5);
-									}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
+									if(!is_null($tempMobileNumber)){
+										$phoneNumber = $responseGetContract->objectResult->celular;
+										$userName = $responseGetContract->objectResult->usuario;
+										$amount = $responseGetContract->objectResult->importe;
+										$responseSent = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber, $amount, $vencimiento));
+										if($responseSent->sent == TRUE){
+											//var_dump("4", $value);exit;
+											contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
+											//sleep(5);
+										}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
+									}
 								}
 							}
 						}/*else {
@@ -433,19 +441,28 @@ class ctr_contracts{
 				$response->result = 0;
 				$response->message = "Ocurrió un error y los archivos no se pueden leer.";
 			}
+			// $response = ctr_contracts::notifyAllContractWithoutPdf($vencimiento);
 		}else{
-			$response = ctr_contracts::notifyAllContractWithoutPdf();
+			// echo "El archivo NO existe loquito";
+			// exit;
 		}
+		
+		// Una vez notificados todos los clientes que tienen PDF, se notifica todos los que no tienen PDF pero si Importe y fecha de ultima notificacion distina al mes actual
+		$response = ctr_contracts::notifyAllContractWithoutPdf($vencimiento);
 
 		return $response;
 	}
 
-	public function notifyOneContractWithoutPdf($idContract){
+	public function notifyOneContractWithoutPdf($idContract, $vencimiento = null){
 		$response = new \stdClass();
 		//ver en la tabla si de ese id de contrato se envia notif por correo o mail
 		$lastNotification = handleDateTime::getDateLastNotification();
 		$responseGetContract = contracts::getContractWithID($idContract);
-		$expiredDate = handleDateTime::getFechaVencimiento();
+		// $expiredDate = handleDateTime::getFechaVencimiento();
+		if(is_null($vencimiento))
+			$expiredDate = handleDateTime::getFechaVencimiento();
+		else
+			$expiredDate = substr($vencimiento, 8, 2) . "-" . substr($vencimiento, 5, 2) . "-" . substr($vencimiento, 0, 4);
 		if( $responseGetContract && $responseGetContract->result == 2){
 			if($responseGetContract->objectResult->enviarEmail == 1){
 				if(!is_null($responseGetContract->objectResult->email)){
@@ -470,12 +487,19 @@ class ctr_contracts{
 				if(!is_null($tempMobileNumber)){
 					$phoneNumber = $responseGetContract->objectResult->celular;
 					$userName = $responseGetContract->objectResult->usuario;
-					$responseMovil = json_decode(ctr_contracts::sendWhatsAppWithoutPdf($phoneNumber, $userName, $tempMobileNumber, $responseGetContract->objectResult->importe));
-					if($responseMovil->sent == TRUE){
-						//var_dump("7", $value);exit;
-						contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, null);
-						//sleep(5);
-					}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
+					// $responseMovil = null;
+					if(!is_null($responseGetContract->objectResult->importe)){ // Si el importe es NULL, no se envia nada
+						$responseMovil = json_decode(ctr_contracts::sendWhatsAppWithoutPdf($phoneNumber, $userName, $tempMobileNumber, $responseGetContract->objectResult->importe, $vencimiento));
+
+						if($responseMovil->sent == TRUE){
+							//var_dump("7", $value);exit;
+							contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, null);
+							//sleep(5);
+						}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
+					} else {
+						$responseMovil = new \stdClass();
+						$responseMovil->sent = FALSE;
+					}
 				}
 			}
 
@@ -515,7 +539,7 @@ class ctr_contracts{
 		}
 	}
 
-	public function notifyAllContractWithoutPdf(){
+	public function notifyAllContractWithoutPdf($vencimiento){
 		$response = new \stdClass();
 		$arrayErrors = array();
 		//por sql traer todos los id de contratos que tienen envio por celular o mail activado e importe mayor a cero y distinto de nulL
@@ -523,7 +547,7 @@ class ctr_contracts{
 		if ( isset($allNumberContracts) ){
 			if ( $allNumberContracts->result == 2 ){
 				foreach ($allNumberContracts->listResult as $key => $value) {
-					$responseNotifyOne = ctr_contracts::notifyOneContractWithoutPdf($value['id']);
+					$responseNotifyOne = ctr_contracts::notifyOneContractWithoutPdf($value['id'], $vencimiento);
 					if ( $responseNotifyOne && $responseNotifyOne->result != 2){
 						$arrayErrors[] = $responseNotifyOne->message;
 					}else $response = $responseNotifyOne;
@@ -591,14 +615,37 @@ class ctr_contracts{
 		$sessionUserName = $_SESSION['ADMIN']['USER'];
 
 		//$data = "id=".WHATSAPP_API_USER."&to=598".$mobilePhone."&content=".$pdf.'&mimetype=application/pdf&name='.$nameFile;
+		//depende del importe que se tenga se agrega en el mensaje o no
+		if ( is_null($amount) ) {
+			if(is_null($vencimiento))
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. handleDateTime::getFechaVencimiento();
+			else
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. substr($vencimiento, 8, 2) . "-" . substr($vencimiento, 5, 2) . "-" . substr($vencimiento, 0, 4);
+		} else if ( $amount == 0 ) {
+			// $message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount; //.' vence: '. handleDateTime::getFechaVencimiento();
+			$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. substr($vencimiento, 8, 2) . "-" . substr($vencimiento, 5, 2) . "-" . substr($vencimiento, 0, 4);
+		} else {
+			if(is_null($vencimiento))
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
+			else
+				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. substr($vencimiento, 8, 2) . "-" . substr($vencimiento, 5, 2) . "-" . substr($vencimiento, 0, 4);
+		}
+		
+		$route = 'imgAndText';
 
-		$route = 'img';
+		// Explode the string by spaces
+		$parts = explode(' ', $message);
+
+		// Form the new string using the second and last parts
+		$nameFile = "Detalle_" . $parts[1] . "_" . $parts[count($parts) - 1];
+
 		$data = http_build_query(
 		    array(
 		        'id'       => WHATSAPP_API_USER,
 		        'content'  => trim($dataFile),
-		        'to'       => trim($mobilePhone),
+		        'to'       => "598" . trim($mobilePhone),
 		        'name'     => trim($nameFile),
+		        'text'     => trim($message),
 		        'mimetype' => 'application/pdf',
 		        'token'    => '45ek2wrhgr3rg33m'
 		    )
@@ -607,50 +654,54 @@ class ctr_contracts{
 
 		$responseCurl = $utils->whatsapp($route, $data);
 
-		//depende del importe que se tenga se agrega en el mensaje o no
-		if ( is_null($amount) ) {
-			if(!is_null($vencimiento))
-				$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. handleDateTime::getFechaVencimiento();
-			else
-				$message = 'Antel 0'.$phoneNumber.' '.$userName.', vence: '. substr($vencimiento, 8, 2) . substr($vencimiento, 5, 2) . substr($vencimiento, 0, 4);
-		} else if ( $amount == 0 ) {
-			$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount; //.' vence: '. handleDateTime::getFechaVencimiento();
-		} else {
-			if(!is_null($vencimiento))
-				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
-			else
-				$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. substr($vencimiento, 8, 2) . substr($vencimiento, 5, 2) . substr($vencimiento, 0, 4);
-		}
-		$datatexto = "id=".WHATSAPP_API_USER."&content=".$message."&to=598".$mobilePhone;
-		$responseCurlTexto = $utils->whatsappApiConection("txt", $datatexto);
+		// $datatexto = "id=".WHATSAPP_API_USER."&content=".$message."&to=598".$mobilePhone;
+		// $responseCurlTexto = $utils->whatsappApiConection("txt", $datatexto);
 
 		//-----------------------------------------------------------------------
-
-		if($responseCurl->result == 2 && $responseCurlTexto->result == 2){
+		// var_dump($responseCurl->result);
+		if($responseCurl->result == 2){
 			$response->sent = TRUE;
 
 			$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
-			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " se envió pdf y se envió texto a ". $mobilePhone);
+			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " se envió pdf y texto (en mensaje unico) a ". $mobilePhone);
 			fclose($logFile);
 
 			return json_encode($response);
-		}else if($responseCurl->result != 2 && $responseCurlTexto->result != 2){
+		} else {
 			$response->sent = FALSE;
 
 			$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
-			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " No se envió pdf, NO se envió texto a ". $mobilePhone);
-			fclose($logFile);
-
-			return json_encode($response);
-		}else{
-			$response->sent = TRUE;
-
-			$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
-			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. "  envió pdf o texto a ". $mobilePhone);
+			fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " No se envió pdf y texto (en mensaje unico) a ". $mobilePhone);
 			fclose($logFile);
 
 			return json_encode($response);
 		}
+
+		// if($responseCurl->result == 2 && $responseCurlTexto->result == 2){
+		// 	$response->sent = TRUE;
+
+		// 	$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
+		// 	fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " se envió pdf y se envió texto a ". $mobilePhone);
+		// 	fclose($logFile);
+
+		// 	return json_encode($response);
+		// }else if($responseCurl->result != 2 && $responseCurlTexto->result != 2){
+		// 	$response->sent = FALSE;
+
+		// 	$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
+		// 	fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. " No se envió pdf, NO se envió texto a ". $mobilePhone);
+		// 	fclose($logFile);
+
+		// 	return json_encode($response);
+		// }else{
+		// 	$response->sent = TRUE;
+
+		// 	$logFile = fopen(LOG_PATHFILE.date("Ymd").".log", 'a') or die("Error creando archivo");
+		// 	fwrite($logFile, "\n".date("d/m/Y H:i:s ")."El usuario en sesion ".$sessionUserName. "  envió pdf o texto a ". $mobilePhone);
+		// 	fclose($logFile);
+
+		// 	return json_encode($response);
+		// }
 
 
 	}
@@ -685,11 +736,17 @@ class ctr_contracts{
 		}
 	}
 
-	function sendWhatsAppWithoutPdf($phoneNumber, $userName, $mobilePhone, $amount) {
+	function sendWhatsAppWithoutPdf($phoneNumber, $userName, $mobilePhone, $amount, $vencimiento = null) {
 		$response = new \stdClass();
 		$utils = new utils();
 
-		$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
+		// $message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
+
+		if(is_null($vencimiento))
+			$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. handleDateTime::getFechaVencimiento();
+		else
+			$message = 'Antel 0'.$phoneNumber.' '.$userName.', importe: $'.$amount.' vence: '. substr($vencimiento, 8, 2) . "-" . substr($vencimiento, 5, 2) . "-" . substr($vencimiento, 0, 4);
+
 		$data = "id=".WHATSAPP_API_USER."&content=".$message."&to=598".$mobilePhone;
 		$responseCurl = $utils->whatsappApiConection("txt", $data);
 
