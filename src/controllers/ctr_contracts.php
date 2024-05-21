@@ -415,12 +415,14 @@ class ctr_contracts{
 										$phoneNumber = $responseGetContract->objectResult->celular;
 										$userName = $responseGetContract->objectResult->usuario;
 										$amount = $responseGetContract->objectResult->importe;
-										$responseSent = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber, $amount, $vencimiento));
-										if($responseSent->sent == TRUE){
-											//var_dump("4", $value);exit;
-											contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
-											//sleep(5);
-										}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
+										if(isset($amount)){ // SI no hay monto (NO ESPECIFICADO) no se envia NADA
+											$responseSent = json_decode(ctr_contracts::sendWhatsApp($phoneNumber, $userName, base64_encode(file_get_contents($folderPath . $value)), $value, $tempMobileNumber, $amount, $vencimiento));
+											if($responseSent->sent == TRUE){
+												//var_dump("4", $value);exit;
+												contracts::setLastNotification($responseGetContract->objectResult->id, $lastNotification, $value);
+												//sleep(5);
+											}else $arrayErrors[] = $responseGetContract->objectResult->usuario;
+										}
 									}
 								}
 							}
