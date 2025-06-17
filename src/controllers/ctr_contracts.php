@@ -121,6 +121,7 @@ class ctr_contracts{
 
 		if(file_exists($folderPath . "Facturas_Movil.zip") === TRUE){
 			// se tendría que borrar la carpeta de pdf
+			error_log("se tendría que borrar la carpeta de pdf");
 			// ctr_contracts::clearFolderPath(["public", "files", "movil"]);
 
 			$zipMovil = new ZipArchive();
@@ -136,6 +137,7 @@ class ctr_contracts{
 		}else{
 			//xml
 			//se tendría que borrar la carpeta de contratos
+			error_log("se tendría que borrar la carpeta de contratos");
 			// ctr_contracts::clearFolderPath(["public", "files", "contratos"]);
 
 			//como se sube zip xml se ponen en null los importes anteriores
@@ -162,23 +164,32 @@ class ctr_contracts{
 		$listDir = array_diff(scandir($folderPath), array('..', '.'));
 		if(sizeof($listDir) > 0){
 			$countNew = 0;
+			$countOld = 0;
 			$arrayContractNotEntered = array();
 			foreach ($listDir as $key => $value) {
+				// error_log("VALUE: $value");
 				$arrayName = explode("_", $value);
 				$numberContract = explode("." ,$arrayName[sizeof($arrayName) - 1])[0];
+				// error_log("CONTRATO PROCESADO: $numberContract");
 				$responseGetContract = contracts::getContractWithNumber($numberContract);
 				if($responseGetContract->result == 1){
 					$responseInsert = contracts::createNewContract(null, null, null, $numberContract, null, null);
-					if($responseInsert->result == 2)
+					if($responseInsert->result == 2){
 						$countNew++;
+						$responseUpdate = contracts::setLastFile($numberContract, $value);		
+					}
+				}else{
+					$responseInsert = contracts::setLastFile($numberContract, $value);
+					if($responseInsert->result == 2)
+						$countOld++;
 				}
 			}
 
 			$response->result = 2;
 			if($countNew > 0)
-				$response->message = "Se descomprimió el archivo y se encontraron " . $countNew . " contratos nuevos";
+				$response->message = "Se descomprimió el archivo y se encontraron " . $countNew . " contratos nuevos + ".$countOld;
 			else
-				$response->message = "Se descomprimió el archivo y los contratos estan preparados para ser enviados.";
+				$response->message = "Se descomprimió el archivo y los ".$countOld." contratos estan preparados para ser enviados.";
 		}else{
 			$response->result = 0;
 			$response->message = "Ocurrió un error y el archivo ingresado no fue descomprimido.";
@@ -205,6 +216,7 @@ class ctr_contracts{
 					$numberMobile = filter_var($numberMobile->{$obj}->nombre, FILTER_SANITIZE_NUMBER_INT);
 					$responseGetContract = contracts::getContractWithNumber($headDetail->NroContrato);
 					//busca el numero de contrato en la base de datos, si el contrato no se encuentra registrado lo registra
+					$countNew++;
 					if($responseGetContract->result == 2){
 						$contract = $responseGetContract->objectResult;
 						if(strlen($numberMobile) < 5)
@@ -223,7 +235,7 @@ class ctr_contracts{
 			}
 			if(sizeof($arrayContractNotEntered) == 0){
 				$response->result = 2;
-				$response->message = "Todos los archivos fueron procesados y se actualizó la información de los contratos.";
+				$response->message = "Todos los archivos fueron procesados y se actualizó la información de los ".$countNew." contratos.";
 			}else{
 				$response->result = 1;
 				$response->message = "Algunos archivos no fueron procesados y la información de sus contratos no fue actualizada.";

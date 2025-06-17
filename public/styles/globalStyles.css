@@ -1,4 +1,4 @@
-html,
+/* html,
 body {
   height: 100%;
 }
@@ -226,4 +226,70 @@ input[type=number] {
 
 #ulContainer::-webkit-scrollbar-track {
   border-radius: 10px;
+} */
+
+
+/* Estilo base */
+.containerCustom {
+  display: grid;
+  grid-template-rows: auto 1fr auto; /* Header, Body, Footer en disposición por defecto */
+  min-height: 100vh;
+  max-height: 100vh;
+  margin: 0 !important;
+  width: 100%;
+}
+
+.header {
+  background-color: #f1f1f1;
+  padding: 10px;
+  text-align: center;
+  color: white;
+  max-width: inherit;
+}
+
+.content {
+  background-color: #f1f1f1;
+  /* padding: 20px; */
+  max-width: inherit;
+  overflow: auto;
+}
+
+.footer {
+  background-color: #4CAF50;
+  padding: 10px;
+  text-align: center;
+  color: white;
+  max-width: inherit;
+  position: sticky;
+  bottom: 0;
+}
+
+/* Ajuste para pantallas menores a 1000px */
+@media (max-width: 1000px) {
+  .containerCustom {
+      grid-template-rows: 1fr 5fr 1fr; /* Ajusta la proporción 1:8:1 */
+  }
+}
+
+@media (max-width: 768px) {
+  .card-header h5 {
+      font-size: 1rem !important;
+  }
+  .btn {
+      padding: 5px;
+      font-size: 0.8rem !important;
+  }
+  table thead {
+      display: none !important;
+  }
+  table tbody tr {
+      display: flex !important;
+      flex-direction: column !important;
+      margin-bottom: 1rem !important;
+  }
+  table tbody tr td {
+      display: block !important;
+      text-align: left !important;
+      border: none !important;
+  }
 }
