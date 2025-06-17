@@ -138,7 +138,8 @@ return function (App $app){
 			$vencimiento = $data['vencimiento'];
 			// var_dump($vencimiento);
 			// exit;
-			$responseFunction = ctr_contracts::notifyAllContract($vencimiento);
+			// $responseFunction = ctr_contracts::notifyAllContract($vencimiento);
+			$responseFunction = ctr_contracts::notifyAllContractNew($vencimiento);
 		}
 		return json_encode($responseFunction);
 	});

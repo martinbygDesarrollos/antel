@@ -29,6 +29,11 @@ class contracts{
 	public function setLastNotification($idContract, $dateInt, $nameFile){
 		return DataBase::sendQuery("UPDATE contratos SET fechaNotificacion = ? , ultimoArchivo = ? WHERE id = ?", array('isi', $dateInt, $nameFile, $idContract), "BOOLE");
 	}
+
+	public function setLastNotificationNew($idContract, $dateInt){
+		return DataBase::sendQuery("UPDATE contratos SET fechaNotificacion = ? WHERE id = ?", array('ii', $dateInt, $idContract), "BOOLE");
+	}
+
 	public function setLastFile($idContract, $nameFile){
 		return DataBase::sendQuery("UPDATE contratos SET ultimoArchivo = ? WHERE contrato = ?", array('si', $nameFile, $idContract), "BOOLE");
 	}

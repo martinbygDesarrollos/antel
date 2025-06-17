@@ -467,6 +467,66 @@ class ctr_contracts{
 		return $response;
 	}
 
+	public function notifyAllContractNew($vencimiento){
+		$response = new \stdClass();
+		$currentMonth = handleDateTime::getDateLastNotification();
+		$folderPath = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . "public" . DIRECTORY_SEPARATOR . "files" . DIRECTORY_SEPARATOR . "movil" . DIRECTORY_SEPARATOR;
+		$errores = array();
+		
+		$responseGetAllContracts = contracts::getAllContracts();
+		if($responseGetAllContracts->result == 2){
+			foreach ($responseGetAllContracts->listResult as $key => $value) {
+				error_log("CONTRACT::::: ID: " . $value['id'] . " USR: " . $value['usuario'] . " IMPORT:" . $value['importe'] . " ENVIAR POR CELU:" . $value['enviarCelular']. " CEL 1:" . $value['celular']. " CEL 2:" . $value['celularEnvio']. " FECHA: " . $value['fechaNotificacion']. " FILE: " . $value['ultimoArchivo']);
+				
+				$destino = null;
+				if(!is_null($value['celularEnvio']))
+					$destino = $value['celularEnvio'];
+				else if(!is_null($value['celular']))
+					$destino = $value['celular'];
+				
+				// PROCESAR WHATSAPP solo si hay destino
+				if(!is_null($destino) && $value['enviarCelular'] == 1) {
+					if(!is_null($value['ultimoArchivo'])) { // TIENE PDF
+						$responseSent = json_decode(ctr_contracts::sendWhatsApp($value['celular'], $value['usuario'], base64_encode(file_get_contents($folderPath . $value['ultimoArchivo'])), $value['ultimoArchivo'], $destino, $value['importe'], $vencimiento));
+						if($responseSent->sent == TRUE){
+							contracts::setLastNotificationNew($value['id'], $currentMonth);
+						} else {
+							$errores[] = $value['contrato'];
+						}
+					} else if(!is_null($value['importe']) && $value['importe'] != "") { // NO TIENE PDF pero tiene importe
+						if(is_null($vencimiento)){
+							$vencimiento = handleDateTime::getFechaVencimiento();
+						}
+						$responseSent = json_decode(ctr_contracts::sendWhatsAppWithoutPdf($value['celular'], $value['usuario'], $destino, $value['importe'], $vencimiento));
+						if($responseSent->sent == TRUE){
+							contracts::setLastNotificationNew($value['id'], $currentMonth);
+						} else {
+							$errores[] = $value['contrato'];
+						}
+					}
+				}
+				// PROCESAR EMAIL (siempre se ejecuta, independientemente del WhatsApp)
+				if($value['enviarEmail'] == 1 && !is_null($value['email'])) {
+					$resultSendEmail = contracts::sendMail($value['celular'], $value['usuario'], $folderPath, $value['ultimoArchivo'], $value['contrato'], $value['email'], $value['importe']);
+					if($resultSendEmail){
+						contracts::setLastNotificationNew($value['id'], $currentMonth);
+					} else {
+						$errores[] = $value['contrato'];
+					}
+				}
+			}
+		}
+
+		if( count($errores) == 0 ){
+			$response->result = 2;
+			$response->message = "Todos los clientes fueron notificados correctamente";
+		} else {
+			$response->result = 1;
+			$response->message = "Los siguientes contratos fallaron la notificación: " . implode(", ", $errores);
+		}
+		return $response;
+	}
+
 	public function notifyOneContractWithoutPdf($idContract, $vencimiento = null){
 		$response = new \stdClass();
 		//ver en la tabla si de ese id de contrato se envia notif por correo o mail
